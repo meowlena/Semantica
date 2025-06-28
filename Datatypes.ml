@@ -30,32 +30,33 @@ type expr =
 
           
           (*         
+           Programa exemplo: Cálculo de fatorial
            
-            let  x: int     =  read() in 
-            let  z: ref int = new x in 
-            let  y: ref int = new 1 in 
-            
-            (while (!z > 0) (
-                   y :=  !y * !z;
-                   z :=  !z - 1);
-            print (! y))     
+           let input_number: int = read() in 
+           let counter: ref int = new input_number in 
+           let accumulator: ref int = new 1 in 
+           
+           (while (!counter > 0) (
+                  accumulator := !accumulator * !counter;
+                  counter := !counter - 1);
+           print (!accumulator))     
 
 *)
 
 
 
-let cndwhi = Binop(Gt, Deref (Id "z"),Num 0)
-let asgny = Asg(Id "y", Binop(Mul, Deref (Id "y"),Deref(Id "z")))
-let asgnz = Asg(Id "z", Binop(Sub, Deref (Id "z"),Num 1))
-let bdwhi = Seq(asgny, asgnz) 
-let whi = Wh(cndwhi, bdwhi)
-let prt = Print(Deref (Id "y"))
-let seq = Seq(whi, prt)
+let while_condition = Binop(Gt, Deref (Id "counter"),Num 0)
+let update_accumulator = Asg(Id "accumulator", Binop(Mul, Deref (Id "accumulator"),Deref(Id "counter")))
+let decrement_counter = Asg(Id "counter", Binop(Sub, Deref (Id "counter"),Num 1))
+let while_body = Seq(update_accumulator, decrement_counter) 
+let factorial_loop = Wh(while_condition, while_body)
+let print_result = Print(Deref (Id "accumulator"))
+let loop_and_print = Seq(factorial_loop, print_result)
     
-let fat = Let("x", TyInt, Read, 
-              Let("z", TyRef TyInt, New (Id "x"), 
-                  Let("y", TyRef TyInt, New (Num 1),
-                      seq)))
+let factorial_program = Let("input_number", TyInt, Read, 
+              Let("counter", TyRef TyInt, New (Id "input_number"), 
+                  Let("accumulator", TyRef TyInt, New (Num 1),
+                      loop_and_print)))
         
   
   
