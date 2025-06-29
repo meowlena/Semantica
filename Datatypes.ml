@@ -29,8 +29,6 @@ type expr =
   | Seq of expr * expr                (* sequenciamento: e1; e2 *)
   | Read                              (* leitura da entrada padrão *)
   | Print of expr                     (* impressão na saída padrão *)
-  
-      
 
 (* ===== EXEMPLO: PROGRAMA PARA CÁLCULO DE FATORIAL ===== *)
 
@@ -124,7 +122,3 @@ let factorial_program =
   - Expressões: Let, New, Deref, Binop, Wh, Asg, Seq, Print, Read
   - Operadores: Gt, Mul, Sub
 *)
-
-
-
-
