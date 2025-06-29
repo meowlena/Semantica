@@ -259,6 +259,93 @@ let () =
     "Teste IF-TIPO8 (if (7 != 7) then (5 + 5) else (3 < 4)) - tipos diferentes (Int e Bool), deve dar erro";
   
   print_endline "";
+  print_endline "=== FIM DOS TESTES ===";
+
+  print_endline "";
+  print_endline "=== TESTES DE VARIÁVEIS (LET e ID) ===";
+  
+  (* Testes básicos de Let *)
+  teste_eval (Let("x", TyInt, Num 42, Id "x")) 
+    "Teste VAR1 (let x: int = 42 in x) = 42";
+  teste_eval (Let("y", TyBool, Bool true, Id "y")) 
+    "Teste VAR2 (let y: bool = true in y) = true";
+  teste_eval (Let("z", TyUnit, Unit, Id "z")) 
+    "Teste VAR3 (let z: unit = () in z) = unit";
+    
+  (* Testes de Let com expressões complexas *)
+  teste_eval (Let("a", TyInt, Binop(Sum, Num 10, Num 5), Id "a"))
+    "Teste VAR4 (let a: int = (10 + 5) in a) = 15";
+  teste_eval (Let("b", TyBool, Binop(Lt, Num 5, Num 10), Id "b"))
+    "Teste VAR5 (let b: bool = (5 < 10) in b) = true";
+    
+  (* Testes de Let com corpo complexo *)
+  teste_eval (Let("x", TyInt, Num 5, Binop(Sum, Id "x", Num 10)))
+    "Teste VAR6 (let x: int = 5 in (x + 10)) = 15";
+  teste_eval (Let("y", TyBool, Bool false, If(Id "y", Num 1, Num 2)))
+    "Teste VAR7 (let y: bool = false in (if y then 1 else 2)) = 2";
+    
+  (* Testes de aninhamento de Let *)
+  teste_eval (Let("x", TyInt, Num 10, 
+                 Let("y", TyInt, Num 20, 
+                    Binop(Sum, Id "x", Id "y"))))
+    "Teste VAR8 (let x: int = 10 in (let y: int = 20 in (x + y))) = 30";
+    
+  (* Testes de escopo: variável interna oculta externa *)
+  teste_eval (Let("x", TyInt, Num 5, 
+                 Let("x", TyInt, Num 10, 
+                    Id "x")))
+    "Teste VAR9 (let x: int = 5 in (let x: int = 10 in x)) = 10 (escopo interno)";
+    
+  (* Testes com diferentes tipos *)
+  teste_eval (Let("num", TyInt, Num 42,
+                 Let("flag", TyBool, Bool true,
+                    Let("nothing", TyUnit, Unit,
+                       If(Id "flag", Id "num", Num 0)))))
+    "Teste VAR10 (múltiplas variáveis de tipos diferentes) = 42";
+    
+  (* Testes de erro: variável não encontrada *)
+  teste_eval_erro (Id "x")
+    "Teste VAR11 (x) - variável não definida, deve dar erro";
+  teste_eval_erro (Let("y", TyInt, Num 5, Id "x"))
+    "Teste VAR12 (let y: int = 5 in x) - x não definida, deve dar erro";
+    
+  (* Testes de expressões com variáveis *)
+  teste_eval (Let("a", TyInt, Num 3,
+                 Let("b", TyInt, Num 4,
+                    Binop(Mul, Id "a", Id "b"))))
+    "Teste VAR13 (let a: int = 3 in (let b: int = 4 in (a * b))) = 12";
+    
+  teste_eval (Let("x", TyInt, Num 7,
+                 Let("y", TyInt, Num 3,
+                    Binop(Gt, Id "x", Id "y"))))
+    "Teste VAR14 (let x: int = 7 in (let y: int = 3 in (x > y))) = true";
+    
+  (* Testes de Let com condicionais *)
+  teste_eval (Let("condition", TyBool, Bool true,
+                 Let("val1", TyInt, Num 100,
+                    Let("val2", TyInt, Num 200,
+                       If(Id "condition", Id "val1", Id "val2")))))
+    "Teste VAR15 (if com variáveis) = 100";
+    
+  (* Testes de reutilização de variáveis *)
+  teste_eval (Let("x", TyInt, Num 5,
+                 Binop(Sum, Id "x", Id "x")))
+    "Teste VAR16 (let x: int = 5 in (x + x)) = 10";
+    
+  teste_eval (Let("flag", TyBool, Bool false,
+                 Binop(Or, Id "flag", Bool true)))
+    "Teste VAR17 (let flag: bool = false in (flag OR true)) = true";
+
+  (* Testes de expressões aninhadas com variáveis *)
+  teste_eval (Let("a", TyInt, Num 2,
+                 Let("b", TyInt, Num 3,
+                    Let("c", TyInt, Num 4,
+                       Binop(Sum, 
+                             Binop(Mul, Id "a", Id "b"),
+                             Id "c")))))
+    "Teste VAR18 (let a=2 in let b=3 in let c=4 in ((a*b)+c)) = 10";
+
+  print_endline "";
   print_endline "=== FIM DOS TESTES ==="
 
 (* Definições para testes interativos *)
