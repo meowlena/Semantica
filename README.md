@@ -158,5 +158,6 @@ Se o Make não estiver disponível ou não funcionar corretamente, use os comand
 Foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar para:
 - Geração da documentação (README.md, comentários no código)
 - Criação do Makefile
+- Elaboração dos testes (Test.ml)
 
 O código do avaliador em si (a lógica semântica) foi implementado manualmente, seguindo as especificações formais do trabalho, sem assistência direta de IA.

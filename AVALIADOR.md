@@ -241,4 +241,7 @@ Durante o desenvolvimento deste projeto, foi utilizada Inteligência Artificial 
 2. **Infraestrutura**:
    - Criação do Makefile para automação da compilação
 
+3. **Testes**:
+   - Estruturação da suíte de testes
+
 **Importante**: A implementação do avaliador em si (lógica semântica, regras de avaliação, estruturas de dados) foi realizada manualmente, seguindo estritamente as especificações formais do trabalho, sem assistência direta de IA.

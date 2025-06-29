@@ -171,6 +171,7 @@ let estado_inicial = {
    NOTA: Foi utilizada Inteligência Artificial (GitHub Copilot) para auxiliar na:
    - Geração da documentação deste módulo
    - Criação do Makefile do projeto
+   - Elaboração dos testes (Test.ml)
    
    O código lógico do avaliador foi implementado sem assistência direta de IA,
    seguindo as especificações formais do trabalho.

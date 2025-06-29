@@ -1,6 +1,10 @@
 (* =====================================================
    TESTES PARA O AVALIADOR DA LINGUAGEM FUNCIONAL
    ===================================================== *)
+   
+(* NOTA: Os testes deste arquivo foram elaborados com o auxílio
+   de Inteligência Artificial (GitHub Copilot) para garantir
+   cobertura abrangente das funcionalidades implementadas. *)
 
 (* Para compilar: 
    ocamlc -c Datatypes.ml
