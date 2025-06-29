@@ -5,6 +5,10 @@
 (* Importa os tipos de expressões (AST) definidos em Datatypes.ml *)
 open Datatypes
 
+(* ===== EXCEPTIONS DO AVALIADOR ===== *)
+exception DivisaoPorZero
+exception TiposIncompativeis of string
+
 (* ===== TIPOS SEMÂNTICOS ===== *)
 
 (* Equivalente ao l das especificações da linguagem *)
@@ -39,7 +43,7 @@ type estado = {
 }
 
 (* Adotei a abordagem de criar um ambiente. 
-  * Contudo, no PDF é usado somente substitução textual.
+  * Contudo, no PDF é usado somente substituição textual.
   * A vantagem do ambiente é que ele exclui a necessidade de
   * varredura de expressões para encontrar variáveis.
   * Assim, o avaliador pode acessar diretamente o valor de uma variável
@@ -47,6 +51,33 @@ type estado = {
   * Isso simplifica a implementação e melhora a eficiência.
 *)
 
+let aplicar_bop op v1 v2 = 
+  match (op, v1, v2) with
+  (* Operações aritméticas *)
+  | (Sum, VInt n1, VInt n2) -> VInt (n1 + n2)
+  | (Sub, VInt n1, VInt n2) -> VInt (n1 - n2)
+  | (Mul, VInt n1, VInt n2) -> VInt (n1 * n2)
+  | (Div, VInt n1, VInt n2) ->
+    if n2 = 0 then 
+      raise DivisaoPorZero
+    else 
+      VInt (n1 / n2)
+      
+  (* Operações de comparação *)
+  | (Lt, VInt n1, VInt n2) -> VBool (n1 < n2)
+  | (Gt, VInt n1, VInt n2) -> VBool (n1 > n2)
+  | (Eq, VInt n1, VInt n2) -> VBool (n1 = n2)
+  | (Neq, VInt n1, VInt n2) -> VBool (n1 <> n2)
+  | (Eq, VBool b1, VBool b2) -> VBool (b1 = b2)
+  | (Neq, VBool b1, VBool b2) -> VBool (b1 <> b2)
+  | (Eq, VUnit, VUnit) -> VBool true
+  | (Neq, VUnit, VUnit) -> VBool false
+  
+  (* Operações lógicas *)
+  | (And, VBool b1, VBool b2) -> VBool (b1 && b2)
+  | (Or, VBool b1, VBool b2) -> VBool (b1 || b2)
+  
+  | _ -> raise (TiposIncompativeis "Operação binária com tipos incompatíveis")
 (* ===== FUNÇÃO PRINCIPAL DE AVALIAÇÃO ===== *)
 
 (* eval : expr -> estado -> (valor * estado)
@@ -66,6 +97,7 @@ type estado = {
    - Num n: retorna VInt n (números literais)
    - Bool b: retorna VBool b (booleanos literais)  
    - Unit: retorna VUnit (valor unit)
+   - Binop: operações aritméticas (Sum, Sub, Mul, Div)
    
    CASOS PENDENTES:
    - Binop: operações aritméticas e lógicas
@@ -94,10 +126,17 @@ let rec eval expr estado =
       (* Unit: () → VUnit *)
       (VUnit, estado)
       
+  | Binop(op, e1, e2) -> 
+      (* OPERAÇÕES BINÁRIAS: avaliar operandos e aplicar operação *)
+      let (valor1, estado1) = eval e1 estado in
+      let (valor2, estado2) = eval e2 estado1 in
+      let resultado = aplicar_bop op valor1 valor2 in
+      (resultado, estado2)
+      
   (* CASOS NÃO IMPLEMENTADOS *)
   | _ -> failwith "Construção não implementada ainda"
 
-(* ===== ESTADO INICIAL E TESTES ===== *)
+(* ===== ESTADO INICIAL ===== *)
 
 (* Estado vazio para começar a execução *)
 let estado_inicial = {
@@ -106,33 +145,15 @@ let estado_inicial = {
   next_addr = 0;     (* primeiro endereço será 0 *)
 }
 
-(* ===== FUNÇÕES AUXILIARES PARA TESTES ===== *)
+(* ===== EXPORTANDO ELEMENTOS PARA USO EXTERNO ===== *)
+(* Exportação de tipos, exceções e funções para que possam ser usados em outros módulos *)
 
-(* Função para imprimir valores de forma legível *)
+(* ===== FUNÇÕES AUXILIARES ===== *)
+
+(* Função para imprimir valores de forma legível (útil para debug) *)
 let string_of_valor = function
   | VInt n -> "VInt " ^ string_of_int n
   | VBool b -> "VBool " ^ string_of_bool b
   | VRef addr -> "VRef " ^ string_of_int addr
   | VUnit -> "VUnit"
-
-(* Função para executar e imprimir resultado de um teste *)
-let teste_eval expr nome =
-  let (valor, novo_estado) = eval expr estado_inicial in
-  Printf.printf "%s: %s\n" nome (string_of_valor valor)
-
-(* ===== BATERIA DE TESTES BÁSICOS ===== *)
-
-(* Testes dos casos já implementados *)
-let () = 
-  print_endline "=== TESTES DO AVALIADOR ===";
-  teste_eval (Num 42) "Teste 1 (Num 42)";
-  teste_eval (Bool true) "Teste 2 (Bool true)";
-  teste_eval (Bool false) "Teste 3 (Bool false)";
-  teste_eval Unit "Teste 4 (Unit)";
-  print_endline "=== FIM DOS TESTES ==="
-
-(* Definições para testes interativos *)
-let teste1 = eval (Num 42) estado_inicial
-let teste2 = eval (Bool true) estado_inicial
-let teste3 = eval Unit estado_inicial
 
