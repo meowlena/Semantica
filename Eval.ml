@@ -7,6 +7,9 @@ open Datatypes
 
 (* ===== TIPOS SEMÂNTICOS ===== *)
 
+(* Equivalente ao l das especificações da linguagem *)
+(* Representa endereços de memória onde valores são armazenados *)
+
 (* Valores computados pelo avaliador (semântica)
    Diferente das expressões (sintaxe), estes representam resultados *)
 type valor = 
@@ -31,9 +34,18 @@ type memoria = (int * valor) list
    Mantém ambiente, memória e próximo endereço disponível *)
 type estado = {
   env: ambiente;      (* ambiente atual de variáveis *)
-  mem: memoria;       (* estado atual da memória *)
-  next_addr: int;     (* próximo endereço livre para novas referências *)
+  mem: memoria;       (* estado atual da memória, σ das especificações *)
+  next_addr: int;     (* próximo endereço livre para novas referências, próx l *)
 }
+
+(* Adotei a abordagem de criar um ambiente. 
+  * Contudo, no PDF é usado somente substitução textual.
+  * A vantagem do ambiente é que ele exclui a necessidade de
+  * varredura de expressões para encontrar variáveis.
+  * Assim, o avaliador pode acessar diretamente o valor de uma variável
+  * sem precisar percorrer toda a expressão.
+  * Isso simplifica a implementação e melhora a eficiência.
+*)
 
 (* ===== FUNÇÃO PRINCIPAL DE AVALIAÇÃO ===== *)
 
