@@ -152,3 +152,11 @@ O nome do arquivo compilado deve corresponder ao nome exato do arquivo fonte, in
 
 ### Comandos do Make não funcionam
 Se o Make não estiver disponível ou não funcionar corretamente, use os comandos de compilação manual listados acima.
+
+## Nota sobre uso de IA
+
+Foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar para:
+- Geração da documentação (README.md, comentários no código)
+- Criação do Makefile
+
+O código do avaliador em si (a lógica semântica) foi implementado manualmente, seguindo as especificações formais do trabalho, sem assistência direta de IA.

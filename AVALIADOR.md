@@ -228,3 +228,17 @@ O avaliador implementa as regras da semântica operacional definida no trabalho:
 - ✅ Prepara para futuras otimizações
 
 Cada caso do `match` corresponde a uma regra da semântica formal, mantendo total fidelidade ao comportamento especificado.
+
+## Uso de Inteligência Artificial
+
+Durante o desenvolvimento deste projeto, foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar para:
+
+1. **Documentação**:
+   - Geração de comentários explicativos no código
+   - Estruturação deste documento (AVALIADOR.md)
+   - Elaboração do README.md
+
+2. **Infraestrutura**:
+   - Criação do Makefile para automação da compilação
+
+**Importante**: A implementação do avaliador em si (lógica semântica, regras de avaliação, estruturas de dados) foi realizada manualmente, seguindo estritamente as especificações formais do trabalho, sem assistência direta de IA.
