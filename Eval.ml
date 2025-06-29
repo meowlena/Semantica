@@ -78,6 +78,7 @@ let aplicar_bop op v1 v2 =
   | (Or, VBool b1, VBool b2) -> VBool (b1 || b2)
   
   | _ -> raise (TiposIncompativeis "Operação binária com tipos incompatíveis")
+
 (* ===== FUNÇÃO PRINCIPAL DE AVALIAÇÃO ===== *)
 
 (* eval : expr -> estado -> (valor * estado)
@@ -128,45 +129,43 @@ let rec eval expr estado =
       
   | Binop(op, e1, e2) -> 
       (* OPERAÇÕES BINÁRIAS: avaliar operandos e aplicar operação *)
-      match op with
-      (* Tratamento de curto-circuito para AND *)
-      | And ->
-          let (v1, s1) = eval e1 estado in
-          match v1 with
-          | VBool false -> (VBool false, s1)  (* Curto-circuito: se e1 é falso, não avalia e2 *)
-          | VBool true -> eval e2 s1          (* Só avalia e2 se e1 é verdadeiro *)
-          | _ -> raise (TiposIncompativeis "Operador AND requer operandos booleanos")
-      
-      (* Tratamento de curto-circuito para OR *)
-      | Or ->
-          let (v1, s1) = eval e1 estado in
-          match v1 with
-          | VBool true -> (VBool true, s1)   (* Curto-circuito: se e1 é verdadeiro, não avalia e2 *)
-          | VBool false -> eval e2 s1        (* Só avalia e2 se e1 é falso *)
-          | _ -> raise (TiposIncompativeis "Operador OR requer operandos booleanos")
-      
-      (* Para outras operações: avalia ambos os lados e aplica a operação *)
-      | _ ->
-          let (valor1, estado1) = eval e1 estado in
-          let (valor2, estado2) = eval e2 estado1 in
-          let resultado = aplicar_bop op valor1 valor2 in
-          (resultado, estado2)
+      (match op with
+       | And ->
+           (* Tratamento de curto-circuito para AND *)
+           let (v1, s1) = eval e1 estado in
+           (match v1 with
+            | VBool false -> (VBool false, s1)  (* Curto-circuito: se e1 é falso, não avalia e2 *)
+            | VBool true -> eval e2 s1          (* Só avalia e2 se e1 é verdadeiro *)
+            | _ -> raise (TiposIncompativeis "Operador AND requer operandos booleanos"))
+       
+       | Or ->
+           (* Tratamento de curto-circuito para OR *)
+           let (v1, s1) = eval e1 estado in
+           (match v1 with
+            | VBool true -> (VBool true, s1)   (* Curto-circuito: se e1 é verdadeiro, não avalia e2 *)
+            | VBool false -> eval e2 s1        (* Só avalia e2 se e1 é falso *)
+            | _ -> raise (TiposIncompativeis "Operador OR requer operandos booleanos"))
+       
+       | _ ->
+           (* Para outras operações: avalia ambos os lados e aplica a operação *)
+           let (valor1, estado1) = eval e1 estado in
+           let (valor2, estado2) = eval e2 estado1 in
+           let resultado = aplicar_bop op valor1 valor2 in
+           (resultado, estado2))
           
-  | If(e1, e2, e3) ->
-      (* CONDICIONAL: if e1 then e2 else e3 *)
-      (* Primeiro avalia a condição e1 *)
-      let (cond_val, estado1) = eval e1 estado in
-      (* Verifica se o resultado é um booleano *)
-      match cond_val with
-      | VBool true -> 
-          (* Se a condição for verdadeira, avalia e2 (then) *)
-          eval e2 estado1
-      | VBool false -> 
-          (* Se a condição for falsa, avalia e3 (else) *)
-          eval e3 estado1
-      | _ -> 
-          (* Erro se a condição não for booleana *)
-          raise (TiposIncompativeis "Condição do IF deve ser booleana")
+  | If(cond, then_expr, else_expr) ->
+      (* CONDICIONAL: if cond then then_expr else else_expr *)
+      let (cond_val, estado1) = eval cond estado in
+      (match cond_val with
+       | VBool true -> 
+           (* Se a condição for verdadeira, avalia a expressão then *)
+           eval then_expr estado1
+       | VBool false -> 
+           (* Se a condição for falsa, avalia a expressão else *)
+           eval else_expr estado1
+       | _ -> 
+           (* Erro se a condição não for booleana *)
+           raise (TiposIncompativeis "Condição do IF deve ser booleana"))
   
   (* CASOS NÃO IMPLEMENTADOS *)
   | _ -> failwith "Construção não implementada ainda"
@@ -202,4 +201,3 @@ let string_of_valor = function
   | VBool b -> "VBool " ^ string_of_bool b
   | VRef addr -> "VRef " ^ string_of_int addr
   | VUnit -> "VUnit"
-
