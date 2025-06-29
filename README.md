@@ -7,60 +7,49 @@ conforme especificado na disciplina de Semântica Formal.
 
 ## Estrutura do Projeto
 
+### Arquivos Principais
 - `Datatypes.ml`: Define os tipos sintáticos da linguagem (AST)
 - `Eval.ml`: Implementa o avaliador (semântica operacional)
 - `Test.ml`: Contém testes para o avaliador
-- `Makefile`: Automatiza a compilação do projeto
+
+### Estrutura Organizacional
+- `/build`: Contém todos os scripts de compilação (separados da implementação)
+- `COMPILACAO.md`: Instruções completas de compilação
+- `AVALIADOR.md`: Documentação do avaliador
+- `GUIA_REFERENCIA.md`: Guia de referência da linguagem
 
 ## Compilação
 
-### Usando Make (recomendado)
+Para instruções detalhadas sobre compilação, consulte o arquivo [COMPILACAO.md](COMPILACAO.md).
+
+### Método Rápido
 
 ```bash
-# Compilar tudo (avaliador e testes)
-make all
+# Usando Make dentro da pasta build
+cd build && make
 
-# Compilar apenas o avaliador
-make avaliador
+# Ou usando os scripts diretamente
+.\build\compile.bat  # Windows
+./build/compile.sh   # Linux/Mac/Unix
 
-# Compilar apenas os testes
-make testes
-
-# Limpar arquivos compilados
-make clean  # Linux/Mac
-make win-clean  # Windows
+# Ou usando os scripts diretamente
+.\build\compile.bat  # Windows
+./build/compile.sh   # Linux/Mac/Unix
 ```
 
-### Compilação Manual (Sem Make)
+Todos os arquivos relacionados à compilação estão na pasta `build/` para manter
+a separação entre o código da implementação e os scripts de construção.
 
-Se o utilitário Make não estiver disponível (comum em algumas máquinas da faculdade), você pode compilar o projeto diretamente usando o compilador OCaml:
-
-```bash
-# Compilar módulos na ordem correta (importante respeitar a ordem)
-ocamlc -c Datatypes.ml     # Compila o módulo de tipos
-ocamlc -c Eval.ml          # Compila o avaliador (depende de Datatypes)
-ocamlc -c Test.ml          # Compila os testes (depende de Datatypes e Eval)
-
-# Linkar o avaliador (sem testes)
-ocamlc -o avaliador Datatypes.cmo Eval.cmo
-
-# Linkar com os testes
-ocamlc -o testes Datatypes.cmo Eval.cmo Test.cmo
 ```
-
-### Limpeza Manual (Sem Make)
-
-Para limpar os arquivos compilados manualmente:
-
-```bash
-# Em Linux/Mac
-rm -f *.cmi *.cmo avaliador testes
-
-# Em Windows (PowerShell)
-Remove-Item -Force *.cmi, *.cmo, avaliador.exe, testes.exe -ErrorAction SilentlyContinue
+build/
+  ├── Makefile       # Makefile principal
+  ├── compile.bat    # Script unificado para Windows
+  ├── compile.sh     # Script unificado para Unix/Linux
+  └── outros scripts auxiliares
+```
 
 # Em Windows (CMD)
-del *.cmi *.cmo avaliador.exe testes.exe
+del *.cmi *.cmo avaliador testes
 ```
 
 ## Execução
@@ -69,14 +58,14 @@ del *.cmi *.cmo avaliador.exe testes.exe
 
 ```bash
 ./avaliador  # Linux/Mac
-.\avaliador.exe  # Windows
+.\avaliador  # Windows
 ```
 
 ### Executar os Testes
 
 ```bash
 ./testes  # Linux/Mac
-.\testes.exe  # Windows
+.\testes  # Windows
 ```
 
 ### Testes Interativos no REPL
@@ -157,7 +146,8 @@ Se o Make não estiver disponível ou não funcionar corretamente, use os comand
 
 Foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar para:
 - Geração da documentação (README.md, comentários no código)
-- Criação do Makefile
+- Criação do Makefile e scripts de compilação (build/)
+- Elaboração dos scripts de build multiplataforma (Windows/Unix)
 - Elaboração dos testes (Test.ml)
 
 O código do avaliador em si (a lógica semântica) foi implementado manualmente, seguindo as especificações formais do trabalho, sem assistência direta de IA.
