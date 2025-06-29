@@ -24,6 +24,21 @@ echo   COMPILACAO DO PROJETO DE SEMANTICA
 echo =======================================
 echo.
 
+REM Verificar se o OCaml está instalado
+echo Verificando instalacao do OCaml...
+ocamlc -version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo ERRO: OCaml nao esta instalado ou nao esta no PATH
+    echo Para instalar o OCaml:
+    echo 1. Instale o OPAM: https://opam.ocaml.org/doc/Install.html
+    echo 2. Execute: opam init ^&^& opam install ocaml
+    echo 3. Configure o ambiente: eval $(opam env^)
+    echo Ou baixe o OCaml diretamente: https://ocaml.org/install
+    exit /b 1
+) else (
+    for /f "tokens=*" %%i in ('ocamlc -version 2^>nul') do echo OCaml encontrado: %%i
+)
+
 REM Limpar arquivos compilados anteriores
 echo Limpando arquivos compilados anteriores...
 del /F /Q *.cmi *.cmo avaliador.exe testes.exe 2>nul
@@ -51,17 +66,31 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [4/5] Criando executavel avaliador...
-ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo
-if %ERRORLEVEL% NEQ 0 (
-    echo ERRO ao criar o executavel avaliador
-    exit /b %ERRORLEVEL%
+REM Tentar compilação nativa primeiro, depois bytecode
+ocamlopt -o avaliador.exe Datatypes.ml Eval.ml >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo Avaliador compilado para codigo nativo
+) else (
+    echo Compilacao nativa nao disponivel, usando bytecode...
+    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo
+    if %ERRORLEVEL% NEQ 0 (
+        echo ERRO ao criar o executavel avaliador
+        exit /b %ERRORLEVEL%
+    )
 )
 
 echo [5/5] Criando executavel de testes...
-ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
-if %ERRORLEVEL% NEQ 0 (
-    echo ERRO ao criar o executavel de testes
-    exit /b %ERRORLEVEL%
+REM Tentar compilação nativa primeiro, depois bytecode
+ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo Testes compilados para codigo nativo
+) else (
+    echo Compilacao nativa nao disponivel, usando bytecode...
+    ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
+    if %ERRORLEVEL% NEQ 0 (
+        echo ERRO ao criar o executavel de testes
+        exit /b %ERRORLEVEL%
+    )
 )
 
 echo.

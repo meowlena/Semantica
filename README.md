@@ -31,11 +31,9 @@ cd build && make
 # Ou usando os scripts diretamente
 .\build\compile.bat  # Windows
 ./build/compile.sh   # Linux/Mac/Unix
-
-# Ou usando os scripts diretamente
-.\build\compile.bat  # Windows
-./build/compile.sh   # Linux/Mac/Unix
 ```
+
+**Nota sobre Compilação no Windows**: Os scripts detectam automaticamente se o compilador nativo (`ocamlopt`) está disponível e compilam para código nativo quando possível, o que elimina a dependência do runtime `ocamlrun`. Caso contrário, usa bytecode (`ocamlc`).
 
 Todos os arquivos relacionados à compilação estão na pasta `build/` para manter
 a separação entre o código da implementação e os scripts de construção.
