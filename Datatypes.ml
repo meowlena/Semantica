@@ -124,7 +124,3 @@ let factorial_program =
   - Expressões: Let, New, Deref, Binop, Wh, Asg, Seq, Print, Read
   - Operadores: Gt, Mul, Sub
 *)
-
-
-
-
