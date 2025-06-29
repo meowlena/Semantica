@@ -42,6 +42,8 @@ type estado = {
   next_addr: int;     (* próximo endereço livre para novas referências, próx l *)
 }
 
+(* ===== FUNÇÕES AUXILIARES ===== *)
+
 (* Adotei a abordagem de criar um ambiente. 
   * Contudo, no PDF é usado somente substituição textual.
   * A vantagem do ambiente é que ele exclui a necessidade de
@@ -69,30 +71,21 @@ let tipo_de_valor = function
   | VRef _ -> "Ref"
   | VUnit -> "Unit"
 
-(* ===== FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DE TIPOS ===== *)
-
-(* Função para verificar se dois valores são do mesmo tipo *)
-let mesmo_tipo v1 v2 =
-  match (v1, v2) with
-  | (VInt _, VInt _) -> true
-  | (VBool _, VBool _) -> true
-  | (VRef _, VRef _) -> true
-  | (VUnit, VUnit) -> true
-  | _ -> false
-
-(* Função para obter uma string representando o tipo de um valor *)
-let tipo_de_valor = function
-  | VInt _ -> "Int"
-  | VBool _ -> "Bool"
-  | VRef _ -> "Ref"
-  | VUnit -> "Unit"
-
 (* Função para imprimir valores de forma legível (útil para debug) *)
 let string_of_valor = function
   | VInt n -> "VInt " ^ string_of_int n
   | VBool b -> "VBool " ^ string_of_bool b
   | VRef addr -> "VRef " ^ string_of_int addr
   | VUnit -> "VUnit"
+
+(* Função auxiliar para buscar variável no ambiente *)
+let rec buscar_variavel nome env =
+  match env with
+  | [] -> failwith ("Variável não encontrada: " ^ nome)
+  | (n, v) :: resto ->
+      if n = nome then v
+      else buscar_variavel nome resto
+
 
 (* ===== FUNÇÕES PARA OPERAÇÕES BINÁRIAS ===== *)
 
@@ -174,6 +167,24 @@ let rec eval expr estado =
   | Unit -> 
       (* Unit: () → VUnit *)
       (VUnit, estado)
+
+  (* VARIÁVEIS *)
+  | Id nome ->
+      (* Acessa uma variável no ambiente: x → valor de x *)
+      let valor = buscar_variavel nome estado.env in
+      (valor, estado)
+
+  | Let(nome, tipo, expr_valor, expr_corpo) ->
+      (* Declara variável: let x: tipo = expr_valor in expr_corpo *)
+      (* 1. Avalia a expressão de valor *)
+      let (valor, estado1) = eval expr_valor estado in
+      
+      (* 2. Adiciona a variável ao ambiente *)
+      let novo_env = (nome, valor) :: estado1.env in
+      let estado_com_variavel = { estado1 with env = novo_env } in
+      
+      (* 3. Avalia o corpo da expressão no novo ambiente *)
+      eval expr_corpo estado_com_variavel
       
   | Binop(op, e1, e2) -> 
       (* OPERAÇÕES BINÁRIAS: avaliar operandos e aplicar operação *)
@@ -205,7 +216,7 @@ let rec eval expr estado =
       (* CONDICIONAL: if cond then then_expr else else_expr *)
       (* Verifica se a condição é booleana *)
       let (cond_val, estado1) = eval cond estado in
-      match cond_val with
+      (match cond_val with
       | VBool true -> 
           (* VERIFICAÇÃO DE TIPO: calcula o tipo do ramo else também para garantir consistência *)
           let (then_val, then_estado) = eval then_expr estado1 in
@@ -236,10 +247,16 @@ let rec eval expr estado =
                     tipo_de_valor else_val))
       | _ -> 
           (* Erro se a condição não for booleana *)
-          raise (TiposIncompativeis "Condição do IF deve ser booleana")
+          raise (TiposIncompativeis "Condição do IF deve ser booleana"))
   
-  (* CASOS NÃO IMPLEMENTADOS *)
-  | _ -> failwith "Construção não implementada ainda"
+  (* CASOS NÃO IMPLEMENTADOS: New, Deref, Asg, Wh, Seq, Print, Read *)
+  | New _ -> failwith "New não implementado ainda"
+  | Deref _ -> failwith "Deref não implementado ainda"  
+  | Asg (_, _) -> failwith "Asg não implementado ainda"
+  | Wh (_, _) -> failwith "Wh não implementado ainda"
+  | Seq (_, _) -> failwith "Seq não implementado ainda"
+  | Print _ -> failwith "Print não implementado ainda"
+  | Read -> failwith "Read não implementado ainda"
 
 (* ===== ESTADO INICIAL ===== *)
 
