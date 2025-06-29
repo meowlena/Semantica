@@ -97,10 +97,10 @@ let aplicar_bop op v1 v2 =
    - Num n: retorna VInt n (números literais)
    - Bool b: retorna VBool b (booleanos literais)  
    - Unit: retorna VUnit (valor unit)
-   - Binop: operações aritméticas (Sum, Sub, Mul, Div)
+   - Binop: operações aritméticas (Sum, Sub, Mul, Div), 
+            comparações (Lt, Gt, Eq, Neq), e lógicas (And, Or)
    
    CASOS PENDENTES:
-   - Binop: operações aritméticas e lógicas
    - Let: declaração de variáveis
    - Id: acesso a variáveis
    - New: criação de referências
@@ -128,11 +128,29 @@ let rec eval expr estado =
       
   | Binop(op, e1, e2) -> 
       (* OPERAÇÕES BINÁRIAS: avaliar operandos e aplicar operação *)
-      let (valor1, estado1) = eval e1 estado in
-      let (valor2, estado2) = eval e2 estado1 in
-      let resultado = aplicar_bop op valor1 valor2 in
-      (resultado, estado2)
+      match op with
+      (* Tratamento de curto-circuito para AND *)
+      | And ->
+          let (v1, s1) = eval e1 estado in
+          match v1 with
+          | VBool false -> (VBool false, s1)  (* Curto-circuito: se e1 é falso, não avalia e2 *)
+          | VBool true -> eval e2 s1          (* Só avalia e2 se e1 é verdadeiro *)
+          | _ -> raise (TiposIncompativeis "Operador AND requer operandos booleanos")
       
+      (* Tratamento de curto-circuito para OR *)
+      | Or ->
+          let (v1, s1) = eval e1 estado in
+          match v1 with
+          | VBool true -> (VBool true, s1)   (* Curto-circuito: se e1 é verdadeiro, não avalia e2 *)
+          | VBool false -> eval e2 s1        (* Só avalia e2 se e1 é falso *)
+          | _ -> raise (TiposIncompativeis "Operador OR requer operandos booleanos")
+      
+      (* Para outras operações: avalia ambos os lados e aplica a operação *)
+      | _ ->
+          let (valor1, estado1) = eval e1 estado in
+          let (valor2, estado2) = eval e2 estado1 in
+          let resultado = aplicar_bop op valor1 valor2 in
+          (resultado, estado2)
   (* CASOS NÃO IMPLEMENTADOS *)
   | _ -> failwith "Construção não implementada ainda"
 
@@ -147,6 +165,16 @@ let estado_inicial = {
 
 (* ===== EXPORTANDO ELEMENTOS PARA USO EXTERNO ===== *)
 (* Exportação de tipos, exceções e funções para que possam ser usados em outros módulos *)
+
+(* ===== NOTA SOBRE O USO DE IA ===== *)
+(*
+   NOTA: Foi utilizada Inteligência Artificial (GitHub Copilot) para auxiliar na:
+   - Geração da documentação deste módulo
+   - Criação do Makefile do projeto
+   
+   O código lógico do avaliador foi implementado sem assistência direta de IA,
+   seguindo as especificações formais do trabalho.
+*)
 
 (* ===== FUNÇÕES AUXILIARES ===== *)
 
