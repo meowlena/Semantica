@@ -99,6 +99,7 @@ let aplicar_bop op v1 v2 =
    - Unit: retorna VUnit (valor unit)
    - Binop: operações aritméticas (Sum, Sub, Mul, Div), 
             comparações (Lt, Gt, Eq, Neq), e lógicas (And, Or)
+   - If: expressões condicionais (if-then-else)
    
    CASOS PENDENTES:
    - Let: declaração de variáveis
@@ -107,7 +108,6 @@ let aplicar_bop op v1 v2 =
    - Deref: desreferenciamento
    - Asg: atribuição a referências
    - Seq: sequenciamento
-   - If: condicionais
    - Wh: loops while
    - Print/Read: I/O básico
 *)
@@ -151,6 +151,23 @@ let rec eval expr estado =
           let (valor2, estado2) = eval e2 estado1 in
           let resultado = aplicar_bop op valor1 valor2 in
           (resultado, estado2)
+          
+  | If(e1, e2, e3) ->
+      (* CONDICIONAL: if e1 then e2 else e3 *)
+      (* Primeiro avalia a condição e1 *)
+      let (cond_val, estado1) = eval e1 estado in
+      (* Verifica se o resultado é um booleano *)
+      match cond_val with
+      | VBool true -> 
+          (* Se a condição for verdadeira, avalia e2 (then) *)
+          eval e2 estado1
+      | VBool false -> 
+          (* Se a condição for falsa, avalia e3 (else) *)
+          eval e3 estado1
+      | _ -> 
+          (* Erro se a condição não for booleana *)
+          raise (TiposIncompativeis "Condição do IF deve ser booleana")
+  
   (* CASOS NÃO IMPLEMENTADOS *)
   | _ -> failwith "Construção não implementada ainda"
 

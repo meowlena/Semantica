@@ -199,6 +199,37 @@ let () =
     "Teste EX4 (((2 * 3) + 4) = ((5 * 2) - 0)) = true";
   
   print_endline "";
+  print_endline "=== TESTES DE EXPRESSÕES CONDICIONAIS (IF) ===";
+  
+  (* Testes básicos de if-then-else *)
+  teste_eval (If(Bool true, Num 1, Num 2)) 
+    "Teste IF1 (if true then 1 else 2) = 1";
+  teste_eval (If(Bool false, Num 1, Num 2)) 
+    "Teste IF2 (if false then 1 else 2) = 2";
+    
+  (* Testes com condições complexas *)
+  teste_eval (If(Binop(Lt, Num 5, Num 10), 
+                Bool true, 
+                Bool false))
+    "Teste IF3 (if (5 < 10) then true else false) = true";
+  teste_eval (If(Binop(Eq, Num 7, Num 7), 
+                Binop(Sum, Num 5, Num 5), 
+                Num 0))
+    "Teste IF4 (if (7 = 7) then (5 + 5) else 0) = 10";
+    
+  (* Testes de aninhamento de ifs *)
+  teste_eval (If(Binop(Gt, Num 10, Num 5),
+                If(Binop(Lt, Num 3, Num 4), 
+                   Num 1, 
+                   Num 2),
+                Num 3))
+    "Teste IF5 (if (10 > 5) then (if (3 < 4) then 1 else 2) else 3) = 1";
+    
+  (* Testes de erro com condição não booleana *)
+  teste_eval_erro (If(Num 1, Num 2, Num 3))
+    "Teste IF6 (if 1 then 2 else 3) - deve dar erro";
+  
+  print_endline "";
   print_endline "=== FIM DOS TESTES ==="
 
 (* Definições para testes interativos *)
