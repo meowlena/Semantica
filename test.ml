@@ -228,6 +228,35 @@ let () =
   (* Testes de erro com condição não booleana *)
   teste_eval_erro (If(Num 1, Num 2, Num 3))
     "Teste IF6 (if 1 then 2 else 3) - deve dar erro";
+    
+  print_endline "";
+  print_endline "=== TESTES DE VERIFICAÇÃO DE TIPOS NO IF ===";
+    
+  (* Testes para garantir que ambos os ramos do if tenham o mesmo tipo *)
+  teste_eval (If(Bool true, Num 10, Num 20)) 
+    "Teste IF-TIPO1 (if true then 10 else 20) - mesmos tipos";
+  teste_eval (If(Bool false, Bool true, Bool false)) 
+    "Teste IF-TIPO2 (if false then true else false) - mesmos tipos";
+  teste_eval (If(Binop(Lt, Num 5, Num 10), Unit, Unit)) 
+    "Teste IF-TIPO3 (if (5 < 10) then unit else unit) - mesmos tipos";
+    
+  (* Testes para verificação de tipos diferentes nos ramos *)
+  teste_eval_erro (If(Bool true, Num 5, Bool true)) 
+    "Teste IF-TIPO4 (if true then 5 else true) - tipos diferentes, deve dar erro";
+  teste_eval_erro (If(Bool false, Unit, Num 10)) 
+    "Teste IF-TIPO5 (if false then unit else 10) - tipos diferentes, deve dar erro";
+  teste_eval_erro (If(Binop(Gt, Num 7, Num 3), Bool false, Num 0)) 
+    "Teste IF-TIPO6 (if (7 > 3) then false else 0) - tipos diferentes, deve dar erro";
+    
+  (* Teste com expressões mais complexas em ambos os ramos *)
+  teste_eval (If(Binop(Eq, Num 5, Num 5),
+                Binop(Sum, Num 10, Num 20),
+                Binop(Mul, Num 5, Num 6)))
+    "Teste IF-TIPO7 (if (5 = 5) then (10 + 20) else (5 * 6)) - ambos retornam Int";
+  teste_eval_erro (If(Binop(Neq, Num 7, Num 7),
+                     Binop(Sum, Num 5, Num 5),
+                     Binop(Lt, Num 3, Num 4)))
+    "Teste IF-TIPO8 (if (7 != 7) then (5 + 5) else (3 < 4)) - tipos diferentes (Int e Bool), deve dar erro";
   
   print_endline "";
   print_endline "=== FIM DOS TESTES ==="

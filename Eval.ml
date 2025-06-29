@@ -51,6 +51,51 @@ type estado = {
   * Isso simplifica a implementação e melhora a eficiência.
 *)
 
+(* ===== FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DE TIPOS ===== *)
+
+(* Função para verificar se dois valores são do mesmo tipo *)
+let mesmo_tipo v1 v2 =
+  match (v1, v2) with
+  | (VInt _, VInt _) -> true
+  | (VBool _, VBool _) -> true
+  | (VRef _, VRef _) -> true
+  | (VUnit, VUnit) -> true
+  | _ -> false
+
+(* Função para obter uma string representando o tipo de um valor *)
+let tipo_de_valor = function
+  | VInt _ -> "Int"
+  | VBool _ -> "Bool"
+  | VRef _ -> "Ref"
+  | VUnit -> "Unit"
+
+(* ===== FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DE TIPOS ===== *)
+
+(* Função para verificar se dois valores são do mesmo tipo *)
+let mesmo_tipo v1 v2 =
+  match (v1, v2) with
+  | (VInt _, VInt _) -> true
+  | (VBool _, VBool _) -> true
+  | (VRef _, VRef _) -> true
+  | (VUnit, VUnit) -> true
+  | _ -> false
+
+(* Função para obter uma string representando o tipo de um valor *)
+let tipo_de_valor = function
+  | VInt _ -> "Int"
+  | VBool _ -> "Bool"
+  | VRef _ -> "Ref"
+  | VUnit -> "Unit"
+
+(* Função para imprimir valores de forma legível (útil para debug) *)
+let string_of_valor = function
+  | VInt n -> "VInt " ^ string_of_int n
+  | VBool b -> "VBool " ^ string_of_bool b
+  | VRef addr -> "VRef " ^ string_of_int addr
+  | VUnit -> "VUnit"
+
+(* ===== FUNÇÕES PARA OPERAÇÕES BINÁRIAS ===== *)
+
 let aplicar_bop op v1 v2 = 
   match (op, v1, v2) with
   (* Operações aritméticas *)
@@ -112,6 +157,9 @@ let aplicar_bop op v1 v2 =
    - Wh: loops while
    - Print/Read: I/O básico
 *)
+
+
+
 let rec eval expr estado =
   match expr with
   (* LITERAIS: valores que se avaliam para si mesmos *)
@@ -155,17 +203,40 @@ let rec eval expr estado =
           
   | If(cond, then_expr, else_expr) ->
       (* CONDICIONAL: if cond then then_expr else else_expr *)
+      (* Verifica se a condição é booleana *)
       let (cond_val, estado1) = eval cond estado in
-      (match cond_val with
-       | VBool true -> 
-           (* Se a condição for verdadeira, avalia a expressão then *)
-           eval then_expr estado1
-       | VBool false -> 
-           (* Se a condição for falsa, avalia a expressão else *)
-           eval else_expr estado1
-       | _ -> 
-           (* Erro se a condição não for booleana *)
-           raise (TiposIncompativeis "Condição do IF deve ser booleana"))
+      match cond_val with
+      | VBool true -> 
+          (* VERIFICAÇÃO DE TIPO: calcula o tipo do ramo else também para garantir consistência *)
+          let (then_val, then_estado) = eval then_expr estado1 in
+          (* No caso de curto-circuito, ainda avaliamos o else apenas para verificação de tipo *)
+          let (else_val, _) = eval else_expr estado1 in
+          if mesmo_tipo then_val else_val then
+            (* Se os tipos são iguais, retorna o valor do ramo then *)
+            (then_val, then_estado)
+          else
+            (* Se os tipos são diferentes, sinaliza erro *)
+            raise (TiposIncompativeis 
+                   ("Tipos inconsistentes nos ramos do IF: " ^ 
+                    tipo_de_valor then_val ^ " e " ^ 
+                    tipo_de_valor else_val))
+      | VBool false -> 
+          (* VERIFICAÇÃO DE TIPO: calcula o tipo do ramo then também para garantir consistência *)
+          (* No caso de curto-circuito, ainda avaliamos o then apenas para verificação de tipo *)
+          let (then_val, _) = eval then_expr estado1 in
+          let (else_val, else_estado) = eval else_expr estado1 in
+          if mesmo_tipo then_val else_val then
+            (* Se os tipos são iguais, retorna o valor do ramo else *)
+            (else_val, else_estado)
+          else
+            (* Se os tipos são diferentes, sinaliza erro *)
+            raise (TiposIncompativeis 
+                   ("Tipos inconsistentes nos ramos do IF: " ^ 
+                    tipo_de_valor then_val ^ " e " ^ 
+                    tipo_de_valor else_val))
+      | _ -> 
+          (* Erro se a condição não for booleana *)
+          raise (TiposIncompativeis "Condição do IF deve ser booleana")
   
   (* CASOS NÃO IMPLEMENTADOS *)
   | _ -> failwith "Construção não implementada ainda"
@@ -193,11 +264,4 @@ let estado_inicial = {
    seguindo as especificações formais do trabalho.
 *)
 
-(* ===== FUNÇÕES AUXILIARES ===== *)
-
-(* Função para imprimir valores de forma legível (útil para debug) *)
-let string_of_valor = function
-  | VInt n -> "VInt " ^ string_of_int n
-  | VBool b -> "VBool " ^ string_of_bool b
-  | VRef addr -> "VRef " ^ string_of_int addr
-  | VUnit -> "VUnit"
+(* ===== FIM DO ARQUIVO ===== *)
