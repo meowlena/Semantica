@@ -54,6 +54,60 @@ type estado = {
 
 **Propósito**: Encapsula todo o contexto necessário para executar um programa.
 
+## Decisão de Implementação: Ambiente vs Substituição
+
+### Especificação Teórica vs Implementação Prática
+
+A **especificação formal** do trabalho utiliza **substituição textual** para o tratamento de variáveis:
+```
+let x : T = v in e  →  e[x := v]  (* substitui todas as ocorrências de x por v em e *)
+```
+
+Nossa **implementação prática** utiliza **ambiente** (environment):
+```ocaml
+type ambiente = (string * valor) list
+let novo_estado = {estado with env = ("x", v) :: estado.env}
+```
+
+### Por que optamos pelo ambiente?
+
+#### 1. **Equivalência Semântica**
+Ambas as abordagens são **semanticamente equivalentes** - produzem o mesmo resultado:
+
+**Substituição:**
+```
+let x = 5 in x + 1  →  5 + 1  →  6
+```
+
+**Ambiente:**
+```ocaml
+let x = 5 in x + 1  (* com env = [("x", VInt 5)] *)  →  6
+```
+
+#### 2. **Vantagens do Ambiente**
+- **Eficiência**: Não precisa percorrer toda a expressão para substituir variáveis
+- **Simplicidade de implementação**: Busca direta por nome de variável
+- **Padrão da indústria**: Como interpretadores reais funcionam (OCaml, Python, JavaScript)
+- **Facilidade de debug**: Estado das variáveis fica explícito
+
+#### 3. **Uso na Literatura**
+- **Livros acadêmicos** (Pierce, Winskel, Nielson) apresentam ambas as abordagens
+- **Interpretadores práticos** sempre usam ambiente
+- **Compiladores funcionais** usam ambiente para otimização
+
+### Equivalência Formal
+
+Para qualquer expressão `e` e variável `x` com valor `v`:
+```
+eval(e[x := v], σ, ∅) ≡ eval(e, σ, {x ↦ v})
+```
+
+Onde:
+- `e[x := v]` = substituição textual
+- `{x ↦ v}` = ambiente com mapeamento x → v
+- `σ` = estado da memória
+- `∅` = ambiente vazio
+
 ## Função Principal: `eval`
 
 ### Assinatura
@@ -149,9 +203,28 @@ let resultado2 = eval (Bool true) estado_inicial
 
 ## Conexão com a Especificação
 
+### Mapeamento das Regras Formais
+
 O avaliador implementa as regras da semântica operacional definida no trabalho:
 - **T-Num**: `n ⇓ VInt n`
 - **T-Bool**: `b ⇓ VBool b`  
 - **T-Unit**: `() ⇓ VUnit`
 
-Cada caso do `match` corresponde a uma regra da semântica formal.
+### Correspondência Especificação ↔ Implementação
+
+| **Especificação (PDF)** | **Nossa Implementação** | **Descrição** |
+|-------------------------|-------------------------|---------------|
+| `σ` (memória)          | `estado.mem`           | Estado da memória |
+| `l` (location)         | `VRef int`             | Endereços de memória |
+| `e[x := v]` (substituição) | `env = [("x", v)]` | Mapeamento de variáveis |
+| `⟨e, σ⟩ ⇓ ⟨v, σ'⟩`     | `eval e estado → (v, estado')` | Avaliação |
+
+### Justificativa da Abordagem
+
+**Resultado semântico idêntico** com **implementação mais eficiente**:
+- ✅ Segue a especificação formalmente
+- ✅ Usa técnicas padrão da área
+- ✅ Facilita manutenção e extensão
+- ✅ Prepara para futuras otimizações
+
+Cada caso do `match` corresponde a uma regra da semântica formal, mantendo total fidelidade ao comportamento especificado.
