@@ -23,8 +23,11 @@ O processo de compilação segue estas etapas:
 2. Compilação de `Datatypes.ml`
 3. Compilação de `Eval.ml`
 4. Compilação de `Test.ml`
-5. Criação do executável `avaliador`
-6. Criação do executável `testes`
+5. Criação do executável `avaliador` (e `avaliador.exe` no Windows)
+6. Criação do executável `testes` (e `testes.exe` no Windows)
+
+No Windows, os executáveis são criados tanto com quanto sem extensão `.exe` 
+para máxima compatibilidade entre diferentes terminais.
 
 ## Uso
 

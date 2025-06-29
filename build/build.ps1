@@ -25,7 +25,7 @@ try {
 
 # Limpar arquivos compilados anteriores
 Write-Host "`nLimpando arquivos compilados anteriores..." -ForegroundColor Cyan
-Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe
+Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe
 
 # Compilar os módulos na ordem correta
 Write-Host "`n[1/5] Compilando Datatypes.ml..." -ForegroundColor White
@@ -51,30 +51,24 @@ if ($LASTEXITCODE -ne 0) {
 
 # Compilar o avaliador
 Write-Host "`n[4/5] Criando executavel avaliador..." -ForegroundColor White
-ocamlc -o avaliador.tmp Datatypes.cmo Eval.cmo
+ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao criar o executavel avaliador" -ForegroundColor Red
     exit $LASTEXITCODE
 }
-# Garantir que o arquivo não tenha extensão .exe
-Copy-Item -Path "avaliador.tmp" -Destination "avaliador" -Force
-Remove-Item -Force -ErrorAction SilentlyContinue "avaliador.tmp", "avaliador.tmp.exe", "avaliador.exe"
 
 # Compilar os testes
 Write-Host "`n[5/5] Criando executavel de testes..." -ForegroundColor White
-ocamlc -o testes.tmp Datatypes.cmo Eval.cmo Test.cmo
+ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao criar o executavel de testes" -ForegroundColor Red
     exit $LASTEXITCODE
 }
-# Garantir que o arquivo não tenha extensão .exe
-Copy-Item -Path "testes.tmp" -Destination "testes" -Force
-Remove-Item -Force -ErrorAction SilentlyContinue "testes.tmp", "testes.tmp.exe", "testes.exe"
 
 Write-Host "`n=======================================" -ForegroundColor Green
 Write-Host "   Compilacao concluida com sucesso!   " -ForegroundColor Green
 Write-Host "=======================================" -ForegroundColor Green
 Write-Host "`nPara executar o avaliador: " -NoNewline
-Write-Host ".\avaliador" -ForegroundColor Yellow
+Write-Host ".\avaliador.exe" -ForegroundColor Yellow
 Write-Host "Para executar os testes: " -NoNewline
-Write-Host ".\testes" -ForegroundColor Yellow
+Write-Host ".\testes.exe" -ForegroundColor Yellow

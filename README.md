@@ -58,14 +58,14 @@ del *.cmi *.cmo avaliador testes
 
 ```bash
 ./avaliador  # Linux/Mac
-.\avaliador  # Windows
+.\avaliador.exe  # Windows (CMD/PowerShell)
 ```
 
 ### Executar os Testes
 
 ```bash
 ./testes  # Linux/Mac
-.\testes  # Windows
+.\testes.exe   # Windows (CMD/PowerShell)
 ```
 
 ### Testes Interativos no REPL

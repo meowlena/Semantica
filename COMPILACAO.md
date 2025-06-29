@@ -48,10 +48,12 @@ Execute-os com:
 
 ```bash
 # Em qualquer plataforma:
-.\avaliador  # No Windows
+.\avaliador  # No Windows (CMD/PowerShell)
+.\avaliador.exe  # No Windows (alternativa com extensão)
 ./avaliador  # No Unix/Linux
 
-.\testes     # No Windows
+.\testes     # No Windows (CMD/PowerShell)
+.\testes.exe # No Windows (alternativa com extensão)
 ./testes     # No Unix/Linux
 ```
 
