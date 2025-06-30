@@ -1,26 +1,6 @@
 (* =====================================================
-   TESTES PARA O AVALIADOR DA LINGUAGEM FUNCIONAL
+   TESTES INTERATIVOS PARA O AVALIADOR DA LINGUAGEM FUNCIONAL
    ===================================================== *)
-   
-(* NOTA: Os testes deste arquivo foram elaborados com o auxílio
-   de Inteligência Artificial (GitHub Copilot) para garantir
-   cobertura abrangente das funcionalidades implementadas. *)
-
-(* Para compilar: 
-   ocamlc -c Datatypes.ml
-   ocamlc -c Eval.ml
-   ocamlc -c Test.ml
-   ocamlc -o testes Datatypes.cmo Eval.cmo Test.cmo
-   
-   Para executar:
-   ./testes
-   
-   Para testes interativos:
-   ocaml
-   #load "Datatypes.cmo";;
-   #load "Eval.cmo";;
-   #use "Test.ml";;
-*)
 
 (* Importa definições do avaliador *)
 open Datatypes
@@ -52,7 +32,7 @@ let teste_eval_erro expr nome =
 
 (* ===== FUNÇÕES DE TESTE ORGANIZADAS ===== *)
 
-(* Função para testes de literais *)
+(* 1. Testes de literais *)
 let testes_literais () =
   print_endline "=== TESTES DE LITERAIS ===";
   teste_eval (Num 42) "Teste 1 (Num 42)";
@@ -61,7 +41,7 @@ let testes_literais () =
   teste_eval Unit "Teste 4 (Unit)";
   print_endline ""
 
-(* Função para testes aritméticos *)
+(* 2. Testes aritméticos *)
 let testes_aritmeticos () =
   print_endline "=== TESTES DE OPERAÇÕES ARITMÉTICAS ===";
   
@@ -90,7 +70,7 @@ let testes_aritmeticos () =
   teste_eval (Binop(Div, Binop(Sum, Num 10, Num 5), Num 3)) "Teste 18 ((10 + 5) / 3)";
   print_endline ""
 
-(* Função para testes de casos de erro *)
+(* 3. Testes de casos de erro *)
 let testes_erros () =
   print_endline "=== TESTES DE CASOS DE ERRO ===";
   
@@ -102,7 +82,7 @@ let testes_erros () =
   teste_eval_erro (Binop(Sum, Bool true, Num 5)) "Teste 21 (true + 5) - deve dar erro";
   print_endline ""
 
-(* Função para testes lógicos *)
+(* 4. Testes lógicos *)
 let testes_logicos () =
   print_endline "=== TESTES DE OPERAÇÕES LÓGICAS ===";
   
@@ -121,8 +101,10 @@ let testes_logicos () =
   (* Testes de tipos incompatíveis *)
   teste_eval_erro (Binop(And, Bool true, Num 1)) "Teste L9 (true AND 1) - deve dar erro";
   teste_eval_erro (Binop(Or, Num 0, Bool false)) "Teste L10 (0 OR false) - deve dar erro";
-  
-  print_endline "";
+  print_endline ""
+
+(* 5. Testes de comparação *)
+let testes_comparacao () =
   print_endline "=== TESTES DE OPERADORES DE COMPARAÇÃO ===";
   
   (* Testes de comparação: menor que (<) *)
@@ -154,18 +136,10 @@ let testes_logicos () =
   teste_eval_erro (Binop(Lt, Bool false, Num 0)) "Teste C18 (false < 0) - deve dar erro";
   teste_eval_erro (Binop(Gt, Unit, Num 1)) "Teste C19 (unit > 1) - deve dar erro";
   teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true ≠ 1) - deve dar erro";
-  
-  (* Testes de combinações de operadores *)
-  teste_eval (Binop(And, Binop(Lt, Num 5, Num 10), Binop(Gt, Num 7, Num 3))) 
-    "Teste CO1 ((5 < 10) AND (7 > 3))";
-  teste_eval (Binop(Or, Binop(Eq, Num 5, Num 5), Binop(Eq, Num 6, Num 7))) 
-    "Teste CO2 ((5 = 5) OR (6 = 7))";
-  teste_eval (Binop(Eq, Binop(Sum, Num 5, Num 5), Num 10)) 
-    "Teste CO3 ((5 + 5) = 10)";
-  teste_eval (Binop(Or, Binop(Lt, Num 5, Num 3), Binop(Neq, Num 7, Num 7))) 
-    "Teste CO4 ((5 < 3) OR (7 ≠ 7))";
-  
-  print_endline "";
+  print_endline ""
+
+(* 6. Testes de curto-circuito *)
+let testes_curto_circuito () =
   print_endline "=== TESTES DE CURTO-CIRCUITO ===";
   
   (* Testes de curto-circuito para AND e OR *)
@@ -175,8 +149,10 @@ let testes_logicos () =
   teste_eval (Binop(Or, Bool true, Bool false)) "Teste SC3 (true OR false) - não deve avaliar o segundo operando";
   teste_eval (Binop(Or, Bool true, Binop(Div, Num 1, Num 0))) 
     "Teste SC4 (true OR (1/0)) - curto-circuito evita divisão por zero";
-    
-  print_endline "";
+  print_endline ""
+
+(* 7. Testes de expressões complexas *)
+let testes_expressoes_complexas () =
   print_endline "=== TESTES DE EXPRESSÕES COMPLEXAS ===";
     
   (* Testes de expressões mais complexas *)
@@ -199,8 +175,10 @@ let testes_logicos () =
                   Binop(Sum, Binop(Mul, Num 2, Num 3), Num 4),
                   Binop(Sub, Binop(Mul, Num 5, Num 2), Num 0)))
     "Teste EX4 (((2 * 3) + 4) = ((5 * 2) - 0)) = true";
-  
-  print_endline "";
+  print_endline ""
+
+(* 8. Testes de If *)
+let testes_if () =
   print_endline "=== TESTES DE EXPRESSÕES CONDICIONAIS (IF) ===";
   
   (* Testes básicos de if-then-else *)
@@ -231,7 +209,6 @@ let testes_logicos () =
   teste_eval_erro (If(Num 1, Num 2, Num 3))
     "Teste IF6 (if 1 then 2 else 3) - deve dar erro";
     
-  print_endline "";
   print_endline "=== TESTES DE VERIFICAÇÃO DE TIPOS NO IF ===";
     
   (* Testes para garantir que ambos os ramos do if tenham o mesmo tipo *)
@@ -259,11 +236,10 @@ let testes_logicos () =
                      Binop(Sum, Num 5, Num 5),
                      Binop(Lt, Num 3, Num 4)))
     "Teste IF-TIPO8 (if (7 != 7) then (5 + 5) else (3 < 4)) - tipos diferentes (Int e Bool), deve dar erro";
-  
-  print_endline "";
-  print_endline "=== FIM DOS TESTES ===";
+  print_endline ""
 
-  print_endline "";
+(* 9. Testes de variáveis (Let e Id) *)
+let testes_variaveis () =
   print_endline "=== TESTES DE VARIÁVEIS (LET e ID) ===";
   
   (* Testes básicos de Let *)
@@ -346,24 +322,80 @@ let testes_logicos () =
                              Binop(Mul, Id "a", Id "b"),
                              Id "c")))))
     "Teste VAR18 (let a=2 in let b=3 in let c=4 in ((a*b)+c)) = 10";
+  print_endline ""
 
-  print_endline "";
-  print_endline "=== FIM DOS TESTES ==="
+(* ===== MENU INTERATIVO ===== *)
 
-(* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
-let () = 
-  print_endline "=== INICIANDO BATERIA DE TESTES ===";
+let mostrar_menu () =
   print_endline "";
-  
+  print_endline "==================================================";
+  print_endline "    SISTEMA DE TESTES INTERATIVO - AVALIADOR";
+  print_endline "==================================================";
+  print_endline "";
+  print_endline "Escolha qual tipo de teste executar:";
+  print_endline "";
+  print_endline "  1. Literais (Num, Bool, Unit)";
+  print_endline "  2. Operações Aritméticas (+, -, *, /)";
+  print_endline "  3. Casos de Erro (divisão por zero, tipos)";
+  print_endline "  4. Operações Lógicas (AND, OR)";
+  print_endline "  5. Operadores de Comparação (<, >, =, ≠)";
+  print_endline "  6. Curto-circuito (AND/OR)";
+  print_endline "  7. Expressões Complexas";
+  print_endline "  8. Expressões Condicionais (IF)";
+  print_endline "  9. Variáveis (LET/ID)";
+  print_endline " 10. Executar TODOS os testes";
+  print_endline "  0. Sair";
+  print_endline "";
+  print_string "Digite sua opção (0-10): ";
+  flush_all ()
+
+let executar_todos_testes () =
+  print_endline "=== EXECUTANDO TODOS OS TESTES ===";
+  print_endline "";
   testes_literais ();
   testes_aritmeticos ();
   testes_erros ();
   testes_logicos ();
-  
-  print_endline "";
-  print_endline "=== TODOS OS TESTES EXECUTADOS ==="
+  testes_comparacao ();
+  testes_curto_circuito ();
+  testes_expressoes_complexas ();
+  testes_if ();
+  testes_variaveis ();
+  print_endline "=== TODOS OS TESTES CONCLUÍDOS ===";
+  print_endline ""
 
-(* Definições para testes interativos *)
-let teste1 = eval (Num 42) estado_inicial
-let teste2 = eval (Bool true) estado_inicial
-let teste3 = eval Unit estado_inicial
+let rec loop_principal () =
+  mostrar_menu ();
+  try
+    let opcao = read_int () in
+    print_endline "";
+    (match opcao with
+     | 0 -> 
+         print_endline "Saindo do sistema de testes. Até logo!";
+         print_endline ""
+     | 1 -> testes_literais (); loop_principal ()
+     | 2 -> testes_aritmeticos (); loop_principal ()
+     | 3 -> testes_erros (); loop_principal ()
+     | 4 -> testes_logicos (); loop_principal ()
+     | 5 -> testes_comparacao (); loop_principal ()
+     | 6 -> testes_curto_circuito (); loop_principal ()
+     | 7 -> testes_expressoes_complexas (); loop_principal ()
+     | 8 -> testes_if (); loop_principal ()
+     | 9 -> testes_variaveis (); loop_principal ()
+     | 10 -> executar_todos_testes (); loop_principal ()
+     | _ -> 
+         print_endline "Opção inválida! Tente novamente.";
+         print_endline "";
+         loop_principal ())
+  with
+  | Failure _ ->
+      print_endline "Entrada inválida! Digite um número entre 0 e 10.";
+      print_endline "";
+      loop_principal ()
+
+(* ===== PROGRAMA PRINCIPAL ===== *)
+
+let () = 
+  print_endline "";
+  print_endline "Bem-vindo ao Sistema de Testes do Avaliador!";
+  loop_principal ()

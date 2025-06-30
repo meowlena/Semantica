@@ -103,7 +103,7 @@ try {
 }
 
 # Compilar os testes
-Write-Host "`n[5/5] Criando executavel de testes..." -ForegroundColor White
+Write-Host "`n[5/6] Criando executavel de testes..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml 2>$null
@@ -121,6 +121,25 @@ try {
     }
 }
 
+# Compilar o sistema de testes interativo
+Write-Host "`n[6/6] Criando executavel de testes interativo..." -ForegroundColor White
+# Tentar compilação nativa primeiro, depois bytecode
+try {
+    & ocamlopt -o testes_interativo.exe Datatypes.ml Eval.ml Test_Interactive.ml 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Testes interativos compilados para codigo nativo" -ForegroundColor Green
+    } else {
+        throw "Compilação nativa falhou"
+    }
+} catch {
+    Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
+    ocamlc -o testes_interativo.exe Datatypes.cmo Eval.cmo Test_Interactive.cmo
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERRO ao criar o executavel de testes interativo" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+}
+
 Write-Host "`n=======================================" -ForegroundColor Green
 Write-Host "   Compilacao concluida com sucesso!   " -ForegroundColor Green
 Write-Host "=======================================" -ForegroundColor Green
@@ -128,3 +147,5 @@ Write-Host "`nPara executar o avaliador: " -NoNewline
 Write-Host ".\avaliador.exe" -ForegroundColor Yellow
 Write-Host "Para executar os testes: " -NoNewline
 Write-Host ".\testes.exe" -ForegroundColor Yellow
+Write-Host "Para executar os testes interativos: " -NoNewline
+Write-Host ".\testes_interativo.exe" -ForegroundColor Cyan
