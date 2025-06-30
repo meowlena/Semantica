@@ -292,7 +292,7 @@ let rec eval expr estado =
           in
           let valor_armazenado = buscar_na_memoria endereco estado1.mem in
           (valor_armazenado, estado1)
-      | _ -> 
+      | _ ->
           raise (TiposIncompativeis "Desreferenciamento requer uma referência"))
   
   (* ATRIBUIÇÃO: e1 := e2 *)
@@ -372,6 +372,65 @@ let rec eval expr estado =
       | Failure _ ->
           (* Se não conseguir converter, trata como erro *)
           failwith ("Entrada inválida: esperado um número, recebido '" ^ linha ^ "'"))
+
+  (* FOR LOOP: for var = start to end do body *)
+  | For(var_name, start_expr, end_expr, body_expr) ->
+      (* Implementação do for usando a semântica de desugaring *)
+      (* for i = start to end do body  ≡  
+         let i: ref int = new start in
+         while (!i <= end) do (
+           body;
+           i := !i + 1
+         ) *)
+      
+      (* 1. Avalia as expressões de início e fim *)
+      let (start_val, estado1) = eval start_expr estado in
+      let (end_val, estado2) = eval end_expr estado1 in
+      
+      (match (start_val, end_val) with
+      | (VInt start_int, VInt end_int) ->
+          (* 2. Cria uma referência para a variável do loop *)
+          let next_addr = estado2.next_addr in
+          let nova_memoria = (next_addr, VInt start_int) :: estado2.mem in
+          let novo_ambiente = (var_name, VRef next_addr) :: estado2.env in
+          let estado_com_var = {
+            env = novo_ambiente;
+            mem = nova_memoria;
+            next_addr = next_addr + 1;
+          } in
+          
+          (* 3. Executa o loop *)
+          let rec loop_for estado_atual =
+            (* Lê o valor atual da variável *)
+            (match buscar_variavel var_name estado_atual.env with
+            | VRef addr ->
+                let valor_atual = List.assoc addr estado_atual.mem in
+                (match valor_atual with
+                | VInt i when i <= end_int ->
+                    (* Executa o corpo do loop *)
+                    let (_, estado_pos_body) = eval body_expr estado_atual in
+                    
+                    (* Incrementa a variável: i := i + 1 *)
+                    let nova_mem = List.map (fun (a, v) -> 
+                      if a = addr then (a, VInt (i + 1)) else (a, v)
+                    ) estado_pos_body.mem in
+                    let estado_incrementado = { estado_pos_body with mem = nova_mem } in
+                    
+                    (* Continua o loop *)
+                    loop_for estado_incrementado
+                    
+                | VInt _ ->
+                    (* Condição falsa, termina o loop *)
+                    (* Remove a variável do ambiente *)
+                    let env_sem_var = List.filter (fun (n, _) -> n <> var_name) estado_atual.env in
+                    (VUnit, { estado_atual with env = env_sem_var })
+                    
+                | _ -> failwith "Variável de loop corrompida")
+            | _ -> failwith "Variável de loop deve ser uma referência")
+          in
+          loop_for estado_com_var
+          
+      | _ -> raise (TiposIncompativeis "For loop requer limites inteiros"))
 
 (* ===== ESTADO INICIAL ===== *)
 

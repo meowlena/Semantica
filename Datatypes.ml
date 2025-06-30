@@ -21,6 +21,7 @@ type expr =
   | If of expr * expr * expr          (* condicionais: if e1 then e2 else e3 *)
   | Binop of bop * expr * expr        (* operações binárias: e1 + e2, e1 && e2 *)
   | Wh of expr * expr                 (* loops while: while e1 do e2 *)
+  | For of string * expr * expr * expr (* loops for: for var = start to end do body *)
   | Asg of expr * expr                (* atribuições: e1 := e2 *)
   | Let of string * tipo * expr * expr (* vinculação: let x: tipo = e1 in e2 *)
   | New of expr                       (* alocação de referência: new e *)
@@ -102,6 +103,32 @@ let factorial_program =
     Let("counter", TyRef TyInt, New (Id "input_number"), 
         Let("accumulator", TyRef TyInt, New (Num 1),
             loop_and_print)))
+
+(* ===== EXEMPLO DE USO DO FOR LOOP ===== *)
+
+(*
+  Exemplo: Soma dos números de 1 a N usando for
+  
+  Equivalente em linguagem imperativa:
+  let n: int = read() in
+  let sum: ref int = new 0 in
+  for i = 1 to n do (
+    sum := !sum + i
+  );
+  print(!sum)
+*)
+
+let for_sum_program = 
+  Let("n", TyInt, Read,
+    Let("sum", TyRef TyInt, New (Num 0),
+      Seq(
+        For("i", Num 1, Id "n", 
+          Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))
+        ),
+        Print(Deref(Id "sum"))
+      )
+    )
+  )
 
 (* ===== INFORMAÇÕES SOBRE O PROGRAMA ===== *)
 

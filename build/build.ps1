@@ -59,46 +59,53 @@ try {
 
 # Limpar arquivos compilados anteriores
 Write-Host "`nLimpando arquivos compilados anteriores..." -ForegroundColor Cyan
-Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe, testes_interativo.exe
+Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe, testes_interativo.exe, test_for.exe
 
 # Compilar os módulos na ordem correta
-Write-Host "`n[1/8] Compilando Datatypes.ml..." -ForegroundColor White
+Write-Host "`n[1/9] Compilando Datatypes.ml..." -ForegroundColor White
 ocamlc -c Datatypes.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Datatypes.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[2/8] Compilando Eval.ml..." -ForegroundColor White
+Write-Host "`n[2/9] Compilando Eval.ml..." -ForegroundColor White
 ocamlc -c Eval.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Eval.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[3/8] Compilando Main.ml..." -ForegroundColor White
+Write-Host "`n[3/9] Compilando Main.ml..." -ForegroundColor White
 ocamlc -c Main.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Main.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[4/8] Compilando Test.ml..." -ForegroundColor White
+Write-Host "`n[4/9] Compilando Test.ml..." -ForegroundColor White
 ocamlc -c Test.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[5/8] Compilando Test_Interactive.ml..." -ForegroundColor White
+Write-Host "`n[5/9] Compilando Test_Interactive.ml..." -ForegroundColor White
 ocamlc -c Test_Interactive.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test_Interactive.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
+Write-Host "`n[6/9] Compilando Test_For.ml..." -ForegroundColor White
+ocamlc -c Test_For.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao compilar Test_For.ml" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
 # Compilar o avaliador
-Write-Host "`n[6/8] Criando executavel avaliador..." -ForegroundColor White
+Write-Host "`n[7/9] Criando executavel avaliador..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o avaliador.exe Datatypes.ml Eval.ml Main.ml 2>$null
@@ -117,7 +124,7 @@ try {
 }
 
 # Compilar os testes
-Write-Host "`n[7/8] Criando executavel de testes..." -ForegroundColor White
+Write-Host "`n[8/9] Criando executavel de testes..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml 2>$null
@@ -136,7 +143,7 @@ try {
 }
 
 # Compilar o sistema de testes interativo
-Write-Host "`n[8/8] Criando executavel de testes interativo..." -ForegroundColor White
+Write-Host "`n[9/10] Criando executavel de testes interativo..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes_interativo.exe Datatypes.ml Eval.ml Test_Interactive.ml 2>$null
@@ -154,6 +161,25 @@ try {
     }
 }
 
+# Compilar o teste do for loop
+Write-Host "`n[10/10] Criando executavel de teste do for..." -ForegroundColor White
+# Tentar compilação nativa primeiro, depois bytecode
+try {
+    & ocamlopt -o test_for.exe Datatypes.ml Eval.ml Test_For.ml 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Teste do for compilado para codigo nativo" -ForegroundColor Green
+    } else {
+        throw "Compilação nativa falhou"
+    }
+} catch {
+    Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
+    ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.cmo
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERRO ao criar o executavel de teste do for" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+}
+
 Write-Host "`n=======================================" -ForegroundColor Green
 Write-Host "   Compilacao concluida com sucesso!   " -ForegroundColor Green
 Write-Host "=======================================" -ForegroundColor Green
@@ -163,3 +189,5 @@ Write-Host "Para executar os testes: " -NoNewline
 Write-Host ".\testes.exe" -ForegroundColor Yellow
 Write-Host "Para executar os testes interativos: " -NoNewline
 Write-Host ".\testes_interativo.exe" -ForegroundColor Cyan
+Write-Host "Para executar o teste do for loop: " -NoNewline
+Write-Host ".\test_for.exe" -ForegroundColor Magenta

@@ -490,6 +490,48 @@ let testes_while () =
     
   print_endline ""
 
+(* Função para testes do for loop *)
+let testes_for () =
+  print_endline "=== TESTES DE FOR LOOP ===";
+  
+  (* Teste basico: soma de 1 a 3 *)
+  teste_eval (Let("sum", TyRef TyInt, New(Num 0),
+                Seq(For("i", Num 1, Num 3, 
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                   Deref(Id "sum"))))
+    "Teste FOR1 (soma de 1 a 3) - deve retornar 6";
+    
+  (* Teste com for de 1 a 1 *)
+  teste_eval (Let("sum", TyRef TyInt, New(Num 0),
+                Seq(For("i", Num 1, Num 1, 
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                   Deref(Id "sum"))))
+    "Teste FOR2 (soma de 1 a 1) - deve retornar 1";
+    
+  (* Teste com for de 5 a 2 (nao deve executar) *)
+  teste_eval (Let("sum", TyRef TyInt, New(Num 10),
+                Seq(For("i", Num 5, Num 2, 
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                   Deref(Id "sum"))))
+    "Teste FOR3 (for 5 a 2) - nao deve executar, retorna 10";
+    
+  (* Teste com variavel no limite *)
+  teste_eval (Let("n", TyInt, Num 4,
+                Let("sum", TyRef TyInt, New(Num 0),
+                  Seq(For("i", Num 1, Id "n", 
+                        Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                     Deref(Id "sum")))))
+    "Teste FOR4 (soma de 1 a n=4) - deve retornar 10";
+    
+  (* Teste for com multiplicacao *)
+  teste_eval (Let("fact", TyRef TyInt, New(Num 1),
+                Seq(For("i", Num 1, Num 4, 
+                      Asg(Id "fact", Binop(Mul, Deref(Id "fact"), Deref(Id "i")))),
+                   Deref(Id "fact"))))
+    "Teste FOR5 (fatorial de 4 usando for) - deve retornar 24";
+    
+  print_endline ""
+
 (* Função para testes de print *)
 let testes_print () =
   print_endline "=== TESTES DE PRINT ===";
@@ -539,6 +581,7 @@ let () =
   testes_deref ();
   testes_atribuicao ();
   testes_while ();
+  testes_for ();
   testes_print ();
   
   print_endline "";
