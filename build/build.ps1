@@ -1,12 +1,13 @@
 # Script PowerShell para compilar o projeto de Semantica Formal
-# Substitui o uso do make no ambiente Windows
+# Versão atualizada - Build completo com testes
 
 # Muda para o diretório raiz do projeto
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
 Write-Host "=======================================" -ForegroundColor Blue
-Write-Host "   COMPILACAO DO PROJETO DE SEMANTICA   " -ForegroundColor Blue
+Write-Host "   BUILD COMPLETO - SEMANTICA L2        " -ForegroundColor Blue
+Write-Host "   (Small-Step Implementation)          " -ForegroundColor Blue
 Write-Host "=======================================" -ForegroundColor Blue
 Write-Host ""
 
@@ -42,126 +43,77 @@ try {
     exit 1
 }
 
-# Verificar se o ocamlrun está disponível
-Write-Host "Verificando runtime do OCaml..." -ForegroundColor Cyan
-try {
-    & ocamlrun -version 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "OCaml runtime (ocamlrun) encontrado" -ForegroundColor Green
-    } else {
-        Write-Host "AVISO: ocamlrun nao encontrado no PATH" -ForegroundColor Yellow
-        Write-Host "Executaveis serao compilados para codigo nativo quando possivel" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "AVISO: ocamlrun nao encontrado no PATH" -ForegroundColor Yellow
-    Write-Host "Executaveis serao compilados para codigo nativo quando possivel" -ForegroundColor Yellow
-}
-
 # Limpar arquivos compilados anteriores
 Write-Host "`nLimpando arquivos compilados anteriores..." -ForegroundColor Cyan
-Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe, test_for.exe
+Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, *.exe
+
+Write-Host "`n=== COMPILANDO MODULOS PRINCIPAIS ===" -ForegroundColor Yellow
 
 # Compilar os módulos na ordem correta
-Write-Host "`n[1/8] Compilando Datatypes.ml..." -ForegroundColor White
+Write-Host "`n[1/4] Compilando Datatypes.ml..." -ForegroundColor White
 ocamlc -c Datatypes.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Datatypes.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[2/8] Compilando Eval.ml..." -ForegroundColor White
+Write-Host "`n[2/4] Compilando Eval.ml..." -ForegroundColor White
 ocamlc -c Eval.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Eval.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[3/8] Compilando Main.ml..." -ForegroundColor White
-ocamlc -c Main.ml
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERRO ao compilar Main.ml" -ForegroundColor Red
-    exit $LASTEXITCODE
-}
-
-Write-Host "`n[4/8] Compilando Test.ml..." -ForegroundColor White
+Write-Host "`n[3/4] Compilando Test.ml..." -ForegroundColor White
 ocamlc -c Test.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[5/8] Compilando Test_For.ml..." -ForegroundColor White
+Write-Host "`n[4/4] Compilando Test_For.ml..." -ForegroundColor White
 ocamlc -c Test_For.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test_For.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-# Compilar o avaliador
-Write-Host "`n[6/8] Criando executavel avaliador..." -ForegroundColor White
-# Tentar compilação nativa primeiro, depois bytecode
-try {
-    & ocamlopt -o avaliador.exe Datatypes.ml Eval.ml Main.ml 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Avaliador compilado para codigo nativo" -ForegroundColor Green
-    } else {
-        throw "Compilação nativa falhou"
-    }
-} catch {
-    Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
-    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo Main.cmo
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERRO ao criar o executavel avaliador" -ForegroundColor Red
-        exit $LASTEXITCODE
-    }
+Write-Host "`n=== CRIANDO EXECUTAVEIS ===" -ForegroundColor Yellow
+
+# Compilar os executáveis de teste
+Write-Host "`n[1/2] Criando executavel de testes..." -ForegroundColor White
+ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao criar testes.exe" -ForegroundColor Red
+    exit $LASTEXITCODE
 }
 
-# Compilar os testes
-Write-Host "`n[7/8] Criando executavel de testes..." -ForegroundColor White
-# Tentar compilação nativa primeiro, depois bytecode
-try {
-    & ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Testes compilados para codigo nativo" -ForegroundColor Green
-    } else {
-        throw "Compilação nativa falhou"
-    }
-} catch {
-    Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
-    ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERRO ao criar o executavel de testes" -ForegroundColor Red
-        exit $LASTEXITCODE
-    }
+Write-Host "`n[2/2] Criando executavel do teste de FOR..." -ForegroundColor White
+ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao criar test_for.exe" -ForegroundColor Red
+    exit $LASTEXITCODE
 }
 
-# Compilar o teste do for loop
-Write-Host "`n[8/8] Criando executavel de teste do for..." -ForegroundColor White
-# Tentar compilação nativa primeiro, depois bytecode
-try {
-    & ocamlopt -o test_for.exe Datatypes.ml Eval.ml Test_For.ml 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Teste do for compilado para codigo nativo" -ForegroundColor Green
-    } else {
-        throw "Compilação nativa falhou"
-    }
-} catch {
-    Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
-    ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.cmo
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERRO ao criar o executavel de teste do for" -ForegroundColor Red
-        exit $LASTEXITCODE
-    }
-}
+Write-Host "`n=== EXECUTANDO TESTES AUTOMATICOS ===" -ForegroundColor Yellow
+Write-Host "`nExecutando testes para validar a compilacao..."
+.\testes.exe
 
-Write-Host "`n=======================================" -ForegroundColor Green
-Write-Host "   Compilacao concluida com sucesso!   " -ForegroundColor Green
-Write-Host "=======================================" -ForegroundColor Green
-Write-Host "`nPara executar o avaliador: " -NoNewline
-Write-Host ".\avaliador.exe" -ForegroundColor Yellow
-Write-Host "Para executar os testes: " -NoNewline
-Write-Host ".\testes.exe" -ForegroundColor Yellow
-Write-Host "Para executar os testes interativos: " -NoNewline
-Write-Host ".\testes.exe -i" -ForegroundColor Cyan
-Write-Host "Para executar o teste do for loop: " -NoNewline
-Write-Host ".\test_for.exe" -ForegroundColor Magenta
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "`n=======================================" -ForegroundColor Green
+    Write-Host "   BUILD COMPLETO E TESTES PASSARAM!   " -ForegroundColor Green
+    Write-Host "=======================================" -ForegroundColor Green
+    Write-Host "`nExecutaveis criados:" -ForegroundColor Cyan
+    Write-Host "  testes.exe     - Bateria completa de testes" -ForegroundColor Yellow
+    Write-Host "  test_for.exe   - Teste interativo do for loop" -ForegroundColor Yellow
+    Write-Host "`nPara testar:"
+    Write-Host "  .\testes.exe      - Executar todos os testes" -ForegroundColor Cyan
+    Write-Host "  .\test_for.exe    - Testar for loop interativo" -ForegroundColor Cyan
+    Write-Host "`nImplementacao small-step da linguagem L2 pronta!" -ForegroundColor Green
+} else {
+    Write-Host "`n=======================================" -ForegroundColor Red
+    Write-Host "   TESTES FALHARAM!                     " -ForegroundColor Red
+    Write-Host "=======================================" -ForegroundColor Red
+    Write-Host "Verifique a implementacao e tente novamente." -ForegroundColor Red
+    exit $LASTEXITCODE
+}
