@@ -69,21 +69,28 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[2/7] Compilando Eval.ml..." -ForegroundColor White
+Write-Host "`n[2/8] Compilando Eval.ml..." -ForegroundColor White
 ocamlc -c Eval.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Eval.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[3/7] Compilando Test.ml..." -ForegroundColor White
+Write-Host "`n[3/8] Compilando Main.ml..." -ForegroundColor White
+ocamlc -c Main.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao compilar Main.ml" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
+Write-Host "`n[4/8] Compilando Test.ml..." -ForegroundColor White
 ocamlc -c Test.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[4/7] Compilando Test_Interactive.ml..." -ForegroundColor White
+Write-Host "`n[5/8] Compilando Test_Interactive.ml..." -ForegroundColor White
 ocamlc -c Test_Interactive.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test_Interactive.ml" -ForegroundColor Red
@@ -91,10 +98,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Compilar o avaliador
-Write-Host "`n[5/7] Criando executavel avaliador..." -ForegroundColor White
+Write-Host "`n[6/8] Criando executavel avaliador..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
-    & ocamlopt -o avaliador.exe Datatypes.ml Eval.ml 2>$null
+    & ocamlopt -o avaliador.exe Datatypes.ml Eval.ml Main.ml 2>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Avaliador compilado para codigo nativo" -ForegroundColor Green
     } else {
@@ -102,7 +109,7 @@ try {
     }
 } catch {
     Write-Host "Compilacao nativa nao disponivel, usando bytecode..." -ForegroundColor Yellow
-    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo
+    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo Main.cmo
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERRO ao criar o executavel avaliador" -ForegroundColor Red
         exit $LASTEXITCODE
@@ -110,7 +117,7 @@ try {
 }
 
 # Compilar os testes
-Write-Host "`n[6/7] Criando executavel de testes..." -ForegroundColor White
+Write-Host "`n[7/8] Criando executavel de testes..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml 2>$null
@@ -129,7 +136,7 @@ try {
 }
 
 # Compilar o sistema de testes interativo
-Write-Host "`n[7/7] Criando executavel de testes interativo..." -ForegroundColor White
+Write-Host "`n[8/8] Criando executavel de testes interativo..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes_interativo.exe Datatypes.ml Eval.ml Test_Interactive.ml 2>$null
