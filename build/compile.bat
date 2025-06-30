@@ -31,45 +31,52 @@ echo.
 
 REM Limpar arquivos compilados anteriores
 echo Limpando arquivos compilados anteriores...
-del /F /Q *.cmi *.cmo avaliador avaliador.exe testes testes.exe testes_interativo testes_interativo.exe 2>nul
+del /F /Q *.cmi *.cmo avaliador avaliador.exe testes testes.exe testes_interativo testes_interativo.exe test_for test_for.exe 2>nul
 
 REM Compilar módulos
-echo [1/8] Compilando Datatypes.ml...
+echo [1/9] Compilando Datatypes.ml...
 ocamlc -c Datatypes.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Datatypes.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [2/8] Compilando Eval.ml...
+echo [2/9] Compilando Eval.ml...
 ocamlc -c Eval.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Eval.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [3/8] Compilando Main.ml...
+echo [3/9] Compilando Main.ml...
 ocamlc -c Main.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Main.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [4/8] Compilando Test.ml...
+echo [4/9] Compilando Test.ml...
 ocamlc -c Test.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [5/8] Compilando Test_Interactive.ml...
+echo [5/9] Compilando Test_Interactive.ml...
 ocamlc -c Test_Interactive.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test_Interactive.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [6/8] Criando executavel avaliador...
+echo [6/9] Compilando Test_For.ml...
+ocamlc -c Test_For.ml
+if %ERRORLEVEL% NEQ 0 (
+    echo ERRO ao compilar Test_For.ml
+    exit /b %ERRORLEVEL%
+)
+
+echo [7/9] Criando executavel avaliador...
 REM Usando copy para garantir que o executável não tenha extensão .exe no Windows
 ocamlc -o avaliador.tmp Datatypes.cmo Eval.cmo Main.cmo
 if %ERRORLEVEL% NEQ 0 (
@@ -79,7 +86,7 @@ if %ERRORLEVEL% NEQ 0 (
 copy /Y avaliador.tmp avaliador >nul
 del /F /Q avaliador.tmp avaliador.tmp.exe avaliador.exe >nul
 
-echo [7/8] Criando executavel de testes...
+echo [8/9] Criando executavel de testes...
 ocamlc -o testes.tmp Datatypes.cmo Eval.cmo Test.cmo
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao criar o executavel de testes
@@ -88,7 +95,7 @@ if %ERRORLEVEL% NEQ 0 (
 copy /Y testes.tmp testes >nul
 del /F /Q testes.tmp testes.tmp.exe testes.exe >nul
 
-echo [8/8] Criando executavel de testes interativo...
+echo [9/9] Criando executavel de testes interativo...
 ocamlc -o testes_interativo.tmp Datatypes.cmo Eval.cmo Test_Interactive.cmo
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao criar o executavel de testes interativo
@@ -96,6 +103,15 @@ if %ERRORLEVEL% NEQ 0 (
 )
 copy /Y testes_interativo.tmp testes_interativo >nul
 del /F /Q testes_interativo.tmp testes_interativo.tmp.exe testes_interativo.exe >nul
+
+echo [10/10] Criando executavel de teste do for...
+ocamlc -o test_for.tmp Datatypes.cmo Eval.cmo Test_For.cmo
+if %ERRORLEVEL% NEQ 0 (
+    echo ERRO ao criar o executavel de teste do for
+    exit /b %ERRORLEVEL%
+)
+copy /Y test_for.tmp test_for >nul
+del /F /Q test_for.tmp test_for.tmp.exe test_for.exe >nul
 
 echo.
 echo =======================================
@@ -105,3 +121,5 @@ echo.
 echo Para executar o avaliador: .\avaliador
 echo Para executar os testes: .\testes
 echo Para executar os testes interativos: .\testes_interativo
+echo Para executar o teste do for loop: .\test_for
+echo Para executar o teste do for loop: .\test_for
