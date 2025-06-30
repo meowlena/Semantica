@@ -255,8 +255,28 @@ let rec eval expr estado =
       let (_, estado1) = eval e1 estado in
       eval e2 estado1
   
-  (* CASOS NÃO IMPLEMENTADOS: New, Deref, Asg, Wh, Print, Read *)
-  | New _ -> failwith "New não implementado ainda"
+  | New(expr) ->
+      (* CRIAÇÃO DE REFERÊNCIA: new expr *)
+      (* 1. Avalia a expressão para obter o valor a ser armazenado *)
+      let (valor, estado1) = eval expr estado in
+      
+      (* 2. Obtém o próximo endereço disponível *)
+      let endereco = estado1.next_addr in
+      
+      (* 3. Adiciona o valor à memória no novo endereço *)
+      let nova_memoria = (endereco, valor) :: estado1.mem in
+      
+      (* 4. Atualiza o estado com a nova memória e incrementa o próximo endereço *)
+      let novo_estado = {
+        env = estado1.env;
+        mem = nova_memoria;
+        next_addr = endereco + 1;
+      } in
+      
+      (* 5. Retorna uma referência para o endereço criado *)
+      (VRef endereco, novo_estado)
+  
+  (* CASOS NÃO IMPLEMENTADOS: Deref, Asg, Wh, Print, Read *)
   | Deref _ -> failwith "Deref não implementado ainda"  
   | Asg (_, _) -> failwith "Asg não implementado ainda"
   | Wh (_, _) -> failwith "Wh não implementado ainda"

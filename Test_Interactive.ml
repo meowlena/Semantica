@@ -124,18 +124,18 @@ let testes_comparacao () =
   teste_eval (Binop(Eq, Bool false, Bool true)) "Teste C10 (false = true)";
   teste_eval (Binop(Eq, Unit, Unit)) "Teste C11 (unit = unit)";
   
-  (* Testes de comparação: diferente (≠) *)
-  teste_eval (Binop(Neq, Num 15, Num 10)) "Teste C12 (15 ≠ 10)";
-  teste_eval (Binop(Neq, Num 7, Num 7)) "Teste C13 (7 ≠ 7)";
-  teste_eval (Binop(Neq, Bool true, Bool false)) "Teste C14 (true ≠ false)";
-  teste_eval (Binop(Neq, Bool true, Bool true)) "Teste C15 (true ≠ true)";
-  teste_eval (Binop(Neq, Unit, Unit)) "Teste C16 (unit ≠ unit)";
+  (* Testes de comparação: diferente (!=) *)
+  teste_eval (Binop(Neq, Num 15, Num 10)) "Teste C12 (15 != 10)";
+  teste_eval (Binop(Neq, Num 7, Num 7)) "Teste C13 (7 != 7)";
+  teste_eval (Binop(Neq, Bool true, Bool false)) "Teste C14 (true != false)";
+  teste_eval (Binop(Neq, Bool true, Bool true)) "Teste C15 (true != true)";
+  teste_eval (Binop(Neq, Unit, Unit)) "Teste C16 (unit != unit)";
   
   (* Testes de comparação com tipos incompatíveis *)
   teste_eval_erro (Binop(Eq, Num 5, Bool true)) "Teste C17 (5 = true) - deve dar erro";
   teste_eval_erro (Binop(Lt, Bool false, Num 0)) "Teste C18 (false < 0) - deve dar erro";
   teste_eval_erro (Binop(Gt, Unit, Num 1)) "Teste C19 (unit > 1) - deve dar erro";
-  teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true ≠ 1) - deve dar erro";
+  teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true != 1) - deve dar erro";
   print_endline ""
 
 (* 6. Testes de curto-circuito *)
@@ -169,7 +169,7 @@ let testes_expressoes_complexas () =
   teste_eval (Binop(Or,
                   Binop(Neq, Binop(Div, Num 10, Num 3), Num 3),
                   Binop(Lt, Binop(Mul, Num (-2), Num 3), Num 0)))
-    "Teste EX3 (((10 / 3) ≠ 3) OR ((-2 * 3) < 0)) = true";
+    "Teste EX3 (((10 / 3) != 3) OR ((-2 * 3) < 0)) = true";
     
   teste_eval (Binop(Eq,
                   Binop(Sum, Binop(Mul, Num 2, Num 3), Num 4),
@@ -355,6 +355,34 @@ let testes_sequenciamento () =
     
   print_endline ""
 
+(* 11. Testes de Referencias (New) *)
+let testes_referencias () =
+  print_endline "=== TESTES DE REFERENCIAS (NEW) ===";
+  
+  (* Testes basicos de criacao de referencias *)
+  teste_eval (New(Num 42)) 
+    "Teste REF1 (new 42) - cria referencia para inteiro";
+  teste_eval (New(Bool true)) 
+    "Teste REF2 (new true) - cria referencia para booleano";
+  teste_eval (New(Unit)) 
+    "Teste REF3 (new ()) - cria referencia para unit";
+    
+  (* Testes com expressoes como valor da referencia *)
+  teste_eval (New(Binop(Sum, Num 10, Num 5))) 
+    "Teste REF4 (new (10 + 5)) - cria referencia para resultado de expressao";
+  teste_eval (New(Binop(Lt, Num 5, Num 10))) 
+    "Teste REF5 (new (5 < 10)) - cria referencia para resultado booleano";
+    
+  (* Testes com variaveis *)
+  teste_eval (Let("x", TyInt, Num 25, New(Id "x"))) 
+    "Teste REF6 (let x: int = 25 in new x) - cria referencia para variavel";
+    
+  (* Testes de criacao de multiplas referencias *)
+  teste_eval (Seq(New(Num 10), New(Num 20))) 
+    "Teste REF7 (new 10; new 20) - enderecos devem ser diferentes";
+    
+  print_endline ""
+
 (* ===== MENU INTERATIVO ===== *)
 
 let mostrar_menu () =
@@ -369,16 +397,17 @@ let mostrar_menu () =
   print_endline "  2. Operações Aritméticas (+, -, *, /)";
   print_endline "  3. Casos de Erro (divisão por zero, tipos)";
   print_endline "  4. Operações Lógicas (AND, OR)";
-  print_endline "  5. Operadores de Comparação (<, >, =, ≠)";
+  print_endline "  5. Operadores de Comparação (<, >, =, !=)";
   print_endline "  6. Curto-circuito (AND/OR)";
   print_endline "  7. Expressões Complexas";
   print_endline "  8. Expressões Condicionais (IF)";
   print_endline "  9. Variáveis (LET/ID)";
   print_endline " 10. Sequenciamento (SEQ)";
-  print_endline " 11. Executar TODOS os testes";
+  print_endline " 11. Referencias (NEW)";
+  print_endline " 12. Executar TODOS os testes";
   print_endline "  0. Sair";
   print_endline "";
-  print_string "Digite sua opção (0-11): ";
+  print_string "Digite sua opção (0-12): ";
   flush_all ()
 
 let executar_todos_testes () =
@@ -394,6 +423,7 @@ let executar_todos_testes () =
   testes_if ();
   testes_variaveis ();
   testes_sequenciamento ();
+  testes_referencias ();
   print_endline "=== TODOS OS TESTES CONCLUÍDOS ===";
   print_endline ""
 
@@ -416,14 +446,15 @@ let rec loop_principal () =
      | 8 -> testes_if (); loop_principal ()
      | 9 -> testes_variaveis (); loop_principal ()
      | 10 -> testes_sequenciamento (); loop_principal ()
-     | 11 -> executar_todos_testes (); loop_principal ()
+     | 11 -> testes_referencias (); loop_principal ()
+     | 12 -> executar_todos_testes (); loop_principal ()
      | _ -> 
          print_endline "Opção inválida! Tente novamente.";
          print_endline "";
          loop_principal ())
   with
   | Failure _ ->
-      print_endline "Entrada inválida! Digite um número entre 0 e 11.";
+      print_endline "Entrada inválida! Digite um número entre 0 e 12.";
       print_endline "";
       loop_principal ()
 

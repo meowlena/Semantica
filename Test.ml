@@ -142,18 +142,18 @@ let testes_logicos () =
   teste_eval (Binop(Eq, Bool false, Bool true)) "Teste C10 (false = true)";
   teste_eval (Binop(Eq, Unit, Unit)) "Teste C11 (unit = unit)";
   
-  (* Testes de comparação: diferente (≠) *)
-  teste_eval (Binop(Neq, Num 15, Num 10)) "Teste C12 (15 ≠ 10)";
-  teste_eval (Binop(Neq, Num 7, Num 7)) "Teste C13 (7 ≠ 7)";
-  teste_eval (Binop(Neq, Bool true, Bool false)) "Teste C14 (true ≠ false)";
-  teste_eval (Binop(Neq, Bool true, Bool true)) "Teste C15 (true ≠ true)";
-  teste_eval (Binop(Neq, Unit, Unit)) "Teste C16 (unit ≠ unit)";
+  (* Testes de comparação: diferente (!=) *)
+  teste_eval (Binop(Neq, Num 15, Num 10)) "Teste C12 (15 != 10)";
+  teste_eval (Binop(Neq, Num 7, Num 7)) "Teste C13 (7 != 7)";
+  teste_eval (Binop(Neq, Bool true, Bool false)) "Teste C14 (true != false)";
+  teste_eval (Binop(Neq, Bool true, Bool true)) "Teste C15 (true != true)";
+  teste_eval (Binop(Neq, Unit, Unit)) "Teste C16 (unit != unit)";
   
   (* Testes de comparação com tipos incompatíveis *)
   teste_eval_erro (Binop(Eq, Num 5, Bool true)) "Teste C17 (5 = true) - deve dar erro";
   teste_eval_erro (Binop(Lt, Bool false, Num 0)) "Teste C18 (false < 0) - deve dar erro";
   teste_eval_erro (Binop(Gt, Unit, Num 1)) "Teste C19 (unit > 1) - deve dar erro";
-  teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true ≠ 1) - deve dar erro";
+  teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true != 1) - deve dar erro";
   
   (* Testes de combinações de operadores *)
   teste_eval (Binop(And, Binop(Lt, Num 5, Num 10), Binop(Gt, Num 7, Num 3))) 
@@ -163,7 +163,7 @@ let testes_logicos () =
   teste_eval (Binop(Eq, Binop(Sum, Num 5, Num 5), Num 10)) 
     "Teste CO3 ((5 + 5) = 10)";
   teste_eval (Binop(Or, Binop(Lt, Num 5, Num 3), Binop(Neq, Num 7, Num 7))) 
-    "Teste CO4 ((5 < 3) OR (7 ≠ 7))";
+    "Teste CO4 ((5 < 3) OR (7 != 7))";
   
   print_endline "";
   print_endline "=== TESTES DE CURTO-CIRCUITO ===";
@@ -193,7 +193,7 @@ let testes_logicos () =
   teste_eval (Binop(Or,
                   Binop(Neq, Binop(Div, Num 10, Num 3), Num 3),
                   Binop(Lt, Binop(Mul, Num (-2), Num 3), Num 0)))
-    "Teste EX3 (((10 / 3) ≠ 3) OR ((-2 * 3) < 0)) = true";
+    "Teste EX3 (((10 / 3) != 3) OR ((-2 * 3) < 0)) = true";
     
   teste_eval (Binop(Eq,
                   Binop(Sum, Binop(Mul, Num 2, Num 3), Num 4),
@@ -350,6 +350,50 @@ let testes_logicos () =
   print_endline "";
   print_endline "=== FIM DOS TESTES ==="
 
+(* Função para testes de referencias (NEW) *)
+let testes_referencias () =
+  print_endline "=== TESTES DE REFERENCIAS (NEW) ===";
+  
+  (* Testes basicos de criacao de referencias *)
+  teste_eval (New(Num 42)) 
+    "Teste REF1 (new 42) - cria referencia para inteiro";
+  teste_eval (New(Bool true)) 
+    "Teste REF2 (new true) - cria referencia para booleano";
+  teste_eval (New(Unit)) 
+    "Teste REF3 (new ()) - cria referencia para unit";
+    
+  (* Testes com expressoes como valor da referencia *)
+  teste_eval (New(Binop(Sum, Num 10, Num 5))) 
+    "Teste REF4 (new (10 + 5)) - cria referencia para resultado de expressao";
+  teste_eval (New(Binop(Lt, Num 5, Num 10))) 
+    "Teste REF5 (new (5 < 10)) - cria referencia para resultado booleano";
+  teste_eval (New(If(Bool true, Num 100, Num 200))) 
+    "Teste REF6 (new (if true then 100 else 200)) - cria referencia para resultado de if";
+    
+  (* Testes com variaveis *)
+  teste_eval (Let("x", TyInt, Num 25, New(Id "x"))) 
+    "Teste REF7 (let x: int = 25 in new x) - cria referencia para variavel";
+  teste_eval (Let("y", TyBool, Bool false, New(Id "y"))) 
+    "Teste REF8 (let y: bool = false in new y) - cria referencia para variavel booleana";
+    
+  (* Testes de criacao de multiplas referencias *)
+  teste_eval (Seq(New(Num 10), New(Num 20))) 
+    "Teste REF9 (new 10; new 20) - cria duas referencias em sequencia";
+  teste_eval (Let("r1", TyRef TyInt, New(Num 100),
+                 Let("r2", TyRef TyBool, New(Bool true),
+                    New(Num 300))))
+    "Teste REF10 (multiplas referencias) - enderecos devem ser diferentes";
+    
+  (* Testes com expressoes complexas *)
+  teste_eval (New(Let("temp", TyInt, Num 7, Binop(Mul, Id "temp", Num 6))))
+    "Teste REF11 (new (let temp: int = 7 in (temp * 6))) - referencia para resultado complexo";
+    
+  (* Teste de aninhamento de New *)
+  teste_eval (New(New(Num 42)))
+    "Teste REF12 (new (new 42)) - referencia para referencia";
+    
+  print_endline ""
+
 (* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
 let () = 
   print_endline "=== INICIANDO BATERIA DE TESTES ===";
@@ -359,6 +403,7 @@ let () =
   testes_aritmeticos ();
   testes_erros ();
   testes_logicos ();
+  testes_referencias ();
   
   print_endline "";
   print_endline "=== TODOS OS TESTES EXECUTADOS ==="
