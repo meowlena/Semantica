@@ -562,15 +562,35 @@ let testes_print () =
     
   print_endline ""
 
-(* ===== FUNCOES DE TESTE ORGANIZADAS (CONTINUACAO) ===== *)
-(* Definições para testes interativos *)
-let teste1 = eval (Num 42) estado_inicial
-let teste2 = eval (Bool true) estado_inicial
-let teste3 = eval Unit estado_inicial
+(* ===== MENU INTERATIVO ===== *)
 
-(* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
-let () = 
-  print_endline "=== INICIANDO BATERIA DE TESTES COMPLETA ===";
+let mostrar_menu () =
+  print_endline "";
+  print_endline "==================================================";
+  print_endline "    SISTEMA DE TESTES INTERATIVO - AVALIADOR";
+  print_endline "==================================================";
+  print_endline "";
+  print_endline "Escolha qual tipo de teste executar:";
+  print_endline "";
+  print_endline "  1. Literais (Num, Bool, Unit)";
+  print_endline "  2. Operações Aritméticas (+, -, *, /)";
+  print_endline "  3. Casos de Erro (divisão por zero, tipos)";
+  print_endline "  4. Operações Lógicas (AND, OR, Comparações)";
+  print_endline "  5. Variáveis (LET/ID)";
+  print_endline "  6. Referencias (NEW)";
+  print_endline "  7. Desreferenciamento (DEREF)";
+  print_endline "  8. Atribuição (ASG)";
+  print_endline "  9. While (WH)";
+  print_endline " 10. For Loop";
+  print_endline " 11. Print";
+  print_endline " 12. Executar TODOS os testes";
+  print_endline "  0. Sair";
+  print_endline "";
+  print_string "Digite sua opção (0-12): ";
+  flush_all ()
+
+let executar_todos_testes () =
+  print_endline "=== EXECUTANDO TODOS OS TESTES ===";
   print_endline "";
   
   testes_literais ();
@@ -586,3 +606,77 @@ let () =
   
   print_endline "";
   print_endline "=== TODOS OS TESTES EXECUTADOS ==="
+
+let rec loop_principal () =
+  mostrar_menu ();
+  try
+    let opcao = read_int () in
+    print_endline "";
+    (match opcao with
+     | 0 -> 
+         print_endline "Saindo do sistema de testes. Até logo!";
+         print_endline ""
+     | 1 -> testes_literais (); loop_principal ()
+     | 2 -> testes_aritmeticos (); loop_principal ()
+     | 3 -> testes_erros (); loop_principal ()
+     | 4 -> testes_logicos (); loop_principal ()
+     | 5 -> print_endline "=== TESTES DE VARIÁVEIS (LET e ID) ==="; 
+            teste_eval (Let("x", TyInt, Num 42, Id "x")) "Teste VAR1 (let x: int = 42 in x) = 42";
+            teste_eval (Let("y", TyBool, Bool true, Id "y")) "Teste VAR2 (let y: bool = true in y) = true";
+            teste_eval (Let("z", TyUnit, Unit, Id "z")) "Teste VAR3 (let z: unit = () in z) = unit";
+            teste_eval (Let("a", TyInt, Binop(Sum, Num 10, Num 5), Id "a")) "Teste VAR4 (let a: int = (10 + 5) in a) = 15";
+            teste_eval (Let("b", TyBool, Binop(Lt, Num 5, Num 10), Id "b")) "Teste VAR5 (let b: bool = (5 < 10) in b) = true";
+            teste_eval (Let("x", TyInt, Num 5, Binop(Sum, Id "x", Num 10))) "Teste VAR6 (let x: int = 5 in (x + 10)) = 15";
+            teste_eval (Let("y", TyBool, Bool false, If(Id "y", Num 1, Num 2))) "Teste VAR7 (let y: bool = false in (if y then 1 else 2)) = 2";
+            teste_eval (Let("x", TyInt, Num 10, Let("y", TyInt, Num 20, Binop(Sum, Id "x", Id "y")))) "Teste VAR8 (let x: int = 10 in (let y: int = 20 in (x + y))) = 30";
+            teste_eval_erro (Id "x") "Teste VAR9 (x) - variável não definida, deve dar erro";
+            print_endline "=== FIM DOS TESTES ==="; loop_principal ()
+     | 6 -> testes_referencias (); loop_principal ()
+     | 7 -> testes_deref (); loop_principal ()
+     | 8 -> testes_atribuicao (); loop_principal ()
+     | 9 -> testes_while (); loop_principal ()
+     | 10 -> testes_for (); loop_principal ()
+     | 11 -> testes_print (); loop_principal ()
+     | 12 -> executar_todos_testes (); loop_principal ()
+     | _ -> 
+         print_endline "Opção inválida! Tente novamente.";
+         print_endline "";
+         loop_principal ())
+  with
+  | Failure _ ->
+      print_endline "Entrada inválida! Digite um número entre 0 e 12.";
+      print_endline "";
+      loop_principal ()
+
+(* ===== PROGRAMA PRINCIPAL ===== *)
+
+let executar_modo_interativo () =
+  print_endline "";
+  print_endline "Bem-vindo ao Sistema de Testes do Avaliador!";
+  loop_principal ()
+
+(* Função para verificar argumentos da linha de comando *)
+let verificar_argumentos () =
+  let argc = Array.length Sys.argv in
+  if argc > 1 then
+    match Sys.argv.(1) with
+    | "-i" | "--interactive" -> 
+        executar_modo_interativo ()
+    | "-h" | "--help" ->
+        print_endline "Uso: ./testes [opções]";
+        print_endline "";
+        print_endline "Opções:";
+        print_endline "  -i, --interactive    Executa no modo interativo";
+        print_endline "  -h, --help          Mostra esta ajuda";
+        print_endline "";
+        print_endline "Sem argumentos: executa todos os testes automaticamente"
+    | _ ->
+        print_endline "Opção desconhecida. Use -h para ajuda.";
+        exit 1
+  else
+    (* Modo padrão: executar todos os testes automaticamente *)
+    executar_todos_testes ()
+
+(* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
+let () = 
+  verificar_argumentos ()
