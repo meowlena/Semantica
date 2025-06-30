@@ -44,49 +44,56 @@ echo Limpando arquivos compilados anteriores...
 del /F /Q *.cmi *.cmo avaliador.exe testes.exe testes_interativo.exe 2>nul
 
 REM Compilar módulos
-echo [1/6] Compilando Datatypes.ml...
+echo [1/8] Compilando Datatypes.ml...
 ocamlc -c Datatypes.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Datatypes.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [2/6] Compilando Eval.ml...
+echo [2/8] Compilando Eval.ml...
 ocamlc -c Eval.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Eval.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [3/6] Compilando Test.ml...
+echo [3/8] Compilando Main.ml...
+ocamlc -c Main.ml
+if %ERRORLEVEL% NEQ 0 (
+    echo ERRO ao compilar Main.ml
+    exit /b %ERRORLEVEL%
+)
+
+echo [4/8] Compilando Test.ml...
 ocamlc -c Test.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [4/8] Compilando Test_Interactive.ml...
+echo [5/8] Compilando Test_Interactive.ml...
 ocamlc -c Test_Interactive.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test_Interactive.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [5/8] Criando executavel avaliador...
+echo [6/8] Criando executavel avaliador...
 REM Tentar compilação nativa primeiro, depois bytecode
-ocamlopt -o avaliador.exe Datatypes.ml Eval.ml >nul 2>&1
+ocamlopt -o avaliador.exe Datatypes.ml Eval.ml Main.ml >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     echo Avaliador compilado para codigo nativo
 ) else (
     echo Compilacao nativa nao disponivel, usando bytecode...
-    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo
+    ocamlc -o avaliador.exe Datatypes.cmo Eval.cmo Main.cmo
     if %ERRORLEVEL% NEQ 0 (
         echo ERRO ao criar o executavel avaliador
         exit /b %ERRORLEVEL%
     )
 )
 
-echo [6/8] Criando executavel de testes...
+echo [7/8] Criando executavel de testes...
 REM Tentar compilação nativa primeiro, depois bytecode
 ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
@@ -100,7 +107,7 @@ if %ERRORLEVEL% EQU 0 (
     )
 )
 
-echo [7/8] Criando executavel de testes interativo...
+echo [8/8] Criando executavel de testes interativo...
 REM Tentar compilação nativa primeiro, depois bytecode
 ocamlopt -o testes_interativo.exe Datatypes.ml Eval.ml Test_Interactive.ml >nul 2>&1
 if %ERRORLEVEL% EQU 0 (

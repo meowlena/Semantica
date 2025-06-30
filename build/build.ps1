@@ -62,7 +62,7 @@ Write-Host "`nLimpando arquivos compilados anteriores..." -ForegroundColor Cyan
 Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe, testes_interativo.exe
 
 # Compilar os módulos na ordem correta
-Write-Host "`n[1/7] Compilando Datatypes.ml..." -ForegroundColor White
+Write-Host "`n[1/8] Compilando Datatypes.ml..." -ForegroundColor White
 ocamlc -c Datatypes.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Datatypes.ml" -ForegroundColor Red

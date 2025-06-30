@@ -34,37 +34,44 @@ echo Limpando arquivos compilados anteriores...
 del /F /Q *.cmi *.cmo avaliador avaliador.exe testes testes.exe testes_interativo testes_interativo.exe 2>nul
 
 REM Compilar módulos
-echo [1/7] Compilando Datatypes.ml...
+echo [1/8] Compilando Datatypes.ml...
 ocamlc -c Datatypes.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Datatypes.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [2/7] Compilando Eval.ml...
+echo [2/8] Compilando Eval.ml...
 ocamlc -c Eval.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Eval.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [3/7] Compilando Test.ml...
+echo [3/8] Compilando Main.ml...
+ocamlc -c Main.ml
+if %ERRORLEVEL% NEQ 0 (
+    echo ERRO ao compilar Main.ml
+    exit /b %ERRORLEVEL%
+)
+
+echo [4/8] Compilando Test.ml...
 ocamlc -c Test.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [4/7] Compilando Test_Interactive.ml...
+echo [5/8] Compilando Test_Interactive.ml...
 ocamlc -c Test_Interactive.ml
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao compilar Test_Interactive.ml
     exit /b %ERRORLEVEL%
 )
 
-echo [6/7] Criando executavel avaliador...
+echo [6/8] Criando executavel avaliador...
 REM Usando copy para garantir que o executável não tenha extensão .exe no Windows
-ocamlc -o avaliador.tmp Datatypes.cmo Eval.cmo
+ocamlc -o avaliador.tmp Datatypes.cmo Eval.cmo Main.cmo
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao criar o executavel avaliador
     exit /b %ERRORLEVEL%
@@ -72,7 +79,7 @@ if %ERRORLEVEL% NEQ 0 (
 copy /Y avaliador.tmp avaliador >nul
 del /F /Q avaliador.tmp avaliador.tmp.exe avaliador.exe >nul
 
-echo [5/7] Criando executavel de testes...
+echo [7/8] Criando executavel de testes...
 ocamlc -o testes.tmp Datatypes.cmo Eval.cmo Test.cmo
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao criar o executavel de testes
@@ -81,7 +88,7 @@ if %ERRORLEVEL% NEQ 0 (
 copy /Y testes.tmp testes >nul
 del /F /Q testes.tmp testes.tmp.exe testes.exe >nul
 
-echo [7/7] Criando executavel de testes interativo...
+echo [8/8] Criando executavel de testes interativo...
 ocamlc -o testes_interativo.tmp Datatypes.cmo Eval.cmo Test_Interactive.cmo
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO ao criar o executavel de testes interativo

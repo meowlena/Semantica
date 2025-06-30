@@ -7,7 +7,7 @@ ROOT_DIR = ..
 OCAMLC = ocamlc
 
 # Arquivos fonte (com caminho relativo)
-SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Test_Interactive.ml
+SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Main.ml $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Test_Interactive.ml
 OBJECTS = $(notdir $(SOURCES:.ml=.cmo))
 
 # Diretório de trabalho
@@ -18,9 +18,9 @@ set-workdir:
 # Alvos principais
 all: set-workdir avaliador testes testes_interativo
 
-# Compilar o avaliador (sem executar os testes)
-avaliador: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
-	cd $(ROOT_DIR) && $(OCAMLC) -o avaliador Datatypes.cmo Eval.cmo
+# Compilar o avaliador (com Main.ml)
+avaliador: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Main.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -o avaliador Datatypes.cmo Eval.cmo Main.cmo
 
 # Compilar e linkar testes
 testes: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Test.cmo
@@ -36,6 +36,9 @@ $(ROOT_DIR)/Datatypes.cmo: $(ROOT_DIR)/Datatypes.ml
 
 $(ROOT_DIR)/Eval.cmo: $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Datatypes.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -c Eval.ml
+
+$(ROOT_DIR)/Main.cmo: $(ROOT_DIR)/Main.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -c Main.ml
 
 $(ROOT_DIR)/Test.cmo: $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -c Test.ml
