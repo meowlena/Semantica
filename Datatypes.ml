@@ -123,7 +123,7 @@ let for_sum_program =
     Let("sum", TyRef TyInt, New (Num 0),
       Seq(
         For("i", Num 1, Id "n", 
-          Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))
+          Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))
         ),
         Print(Deref(Id "sum"))
       )

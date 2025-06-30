@@ -1,4 +1,19 @@
-(* =====================================================
+(* =====================================(* Função para executar e imprimir resultado de um teste *)
+let teste_eval expr nome =
+  let estado_limpo = { env = []; mem = []; next_addr = 0 } in
+  let (valor, novo_estado) = eval expr estado_limpo in
+  Printf.printf "%s: %s\n" nome (string_of_valor valor)
+
+(* Função para testar casos que podem dar erro *)
+let teste_eval_erro expr nome =
+  try
+    let estado_limpo = { env = []; mem = []; next_addr = 0 } in
+    let (valor, novo_estado) = eval expr estado_limpo in
+    Printf.printf "%s: %s\n" nome (string_of_valor valor)
+  with
+    | DivisaoPorZero -> Printf.printf "%s: ERRO - Divisão por zero\n" nome
+    | TiposIncompativeis msg -> Printf.printf "%s: ERRO - %s\n" nome msg
+    | exn -> Printf.printf "%s: ERRO - %s\n" nome (Printexc.to_string exn)==
    TESTES PARA O AVALIADOR DA LINGUAGEM FUNCIONAL
    ===================================================== *)
    
@@ -497,21 +512,21 @@ let testes_for () =
   (* Teste basico: soma de 1 a 3 *)
   teste_eval (Let("sum", TyRef TyInt, New(Num 0),
                 Seq(For("i", Num 1, Num 3, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
                    Deref(Id "sum"))))
     "Teste FOR1 (soma de 1 a 3) - deve retornar 6";
     
   (* Teste com for de 1 a 1 *)
   teste_eval (Let("sum", TyRef TyInt, New(Num 0),
                 Seq(For("i", Num 1, Num 1, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
                    Deref(Id "sum"))))
     "Teste FOR2 (soma de 1 a 1) - deve retornar 1";
     
   (* Teste com for de 5 a 2 (nao deve executar) *)
   teste_eval (Let("sum", TyRef TyInt, New(Num 10),
                 Seq(For("i", Num 5, Num 2, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
                    Deref(Id "sum"))))
     "Teste FOR3 (for 5 a 2) - nao deve executar, retorna 10";
     
@@ -519,14 +534,14 @@ let testes_for () =
   teste_eval (Let("n", TyInt, Num 4,
                 Let("sum", TyRef TyInt, New(Num 0),
                   Seq(For("i", Num 1, Id "n", 
-                        Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i")))),
+                        Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
                      Deref(Id "sum")))))
     "Teste FOR4 (soma de 1 a n=4) - deve retornar 10";
     
   (* Teste for com multiplicacao *)
   teste_eval (Let("fact", TyRef TyInt, New(Num 1),
                 Seq(For("i", Num 1, Num 4, 
-                      Asg(Id "fact", Binop(Mul, Deref(Id "fact"), Deref(Id "i")))),
+                      Asg(Id "fact", Binop(Mul, Deref(Id "fact"), Id "i"))),
                    Deref(Id "fact"))))
     "Teste FOR5 (fatorial de 4 usando for) - deve retornar 24";
     
