@@ -276,12 +276,102 @@ let rec eval expr estado =
       (* 5. Retorna uma referência para o endereço criado *)
       (VRef endereco, novo_estado)
   
-  (* CASOS NÃO IMPLEMENTADOS: Deref, Asg, Wh, Print, Read *)
-  | Deref _ -> failwith "Deref não implementado ainda"  
-  | Asg (_, _) -> failwith "Asg não implementado ainda"
-  | Wh (_, _) -> failwith "Wh não implementado ainda"
-  | Print _ -> failwith "Print não implementado ainda"
-  | Read -> failwith "Read não implementado ainda"
+  (* DESREFERENCIAMENTO: !expr *)
+  | Deref(expr) ->
+      (* 1. Avalia a expressão para obter uma referência *)
+      let (valor, estado1) = eval expr estado in
+      (match valor with
+      | VRef endereco ->
+          (* 2. Busca o valor armazenado no endereço *)
+          let rec buscar_na_memoria addr mem =
+            match mem with
+            | [] -> failwith ("Endereço inválido na memória: " ^ string_of_int addr)
+            | (a, v) :: resto ->
+                if a = addr then v
+                else buscar_na_memoria addr resto
+          in
+          let valor_armazenado = buscar_na_memoria endereco estado1.mem in
+          (valor_armazenado, estado1)
+      | _ -> 
+          raise (TiposIncompativeis "Desreferenciamento requer uma referência"))
+  
+  (* ATRIBUIÇÃO: e1 := e2 *)
+  | Asg(expr_ref, expr_valor) ->
+      (* 1. Avalia a expressão da referência *)
+      let (ref_val, estado1) = eval expr_ref estado in
+      (match ref_val with
+      | VRef endereco ->
+          (* 2. Avalia o novo valor *)
+          let (novo_valor, estado2) = eval expr_valor estado1 in
+          
+          (* 3. Atualiza a memória no endereço especificado *)
+          let rec atualizar_memoria addr novo_val mem =
+            match mem with
+            | [] -> failwith ("Endereço inválido na atribuição: " ^ string_of_int addr)
+            | (a, v) :: resto ->
+                if a = addr then (a, novo_val) :: resto
+                else (a, v) :: (atualizar_memoria addr novo_val resto)
+          in
+          let nova_memoria = atualizar_memoria endereco novo_valor estado2.mem in
+          let novo_estado = { estado2 with mem = nova_memoria } in
+          
+          (* 4. Retorna VUnit (atribuição não tem valor de retorno útil) *)
+          (VUnit, novo_estado)
+      | _ ->
+          raise (TiposIncompativeis "Atribuição requer uma referência como destino"))
+  (* WHILE LOOP: while e1 do e2 *)
+  | Wh(cond_expr, body_expr) ->
+      (* Implementação recursiva do while seguindo a semântica operacional *)
+      let rec loop_while estado_atual =
+        (* 1. Avalia a condição *)
+        let (cond_val, estado_pos_cond) = eval cond_expr estado_atual in
+        (match cond_val with
+        | VBool true ->
+            (* Se condição é verdadeira: executa corpo e continua o loop *)
+            let (_, estado_pos_body) = eval body_expr estado_pos_cond in
+            loop_while estado_pos_body
+        | VBool false ->
+            (* Se condição é falsa: termina o loop, retorna VUnit *)
+            (VUnit, estado_pos_cond)
+        | _ ->
+            raise (TiposIncompativeis "Condição do while deve ser booleana"))
+      in
+      loop_while estado
+  
+  (* IMPRESSÃO: print expr *)
+  | Print(expr) ->
+      (* 1. Avalia a expressão a ser impressa *)
+      let (valor, estado1) = eval expr estado in
+      
+      (* 2. Converte o valor para string e imprime *)
+      let string_valor = 
+        match valor with
+        | VInt n -> string_of_int n
+        | VBool true -> "true"
+        | VBool false -> "false"
+        | VUnit -> "()"
+        | VRef addr -> "ref@" ^ string_of_int addr
+      in
+      print_endline string_valor;
+      
+      (* 3. Retorna VUnit (impressão não tem valor de retorno útil) *)
+      (VUnit, estado1)
+  
+  (* LEITURA: read *)
+  | Read ->
+      (* 1. Lê uma linha da entrada padrão *)
+      print_string "> ";
+      flush stdout;
+      let linha = read_line () in
+      
+      (* 2. Tenta converter para inteiro *)
+      (try
+        let numero = int_of_string (String.trim linha) in
+        (VInt numero, estado)
+      with
+      | Failure _ ->
+          (* Se não conseguir converter, trata como erro *)
+          failwith ("Entrada inválida: esperado um número, recebido '" ^ linha ^ "'"))
 
 (* ===== ESTADO INICIAL ===== *)
 

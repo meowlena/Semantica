@@ -11,6 +11,9 @@
    ocamlc -c Eval.ml
    ocamlc -c Test.ml
    ocamlc -o testes Datatypes.cmo Eval.cmo Test.cmo
+                   Asg(Id "counter", Binop(Sum, Deref(Id "counter"), Num 1))),
+                Deref(Id "counter"))))
+    "Teste WH2 (contador de 0 a 3) - deve retornar 3";es Datatypes.cmo Eval.cmo Test.cmo
    
    Para executar:
    ./testes
@@ -394,9 +397,138 @@ let testes_referencias () =
     
   print_endline ""
 
+(* Função para testes de desreferenciamento (DEREF) *)
+let testes_deref () =
+  print_endline "=== TESTES DE DESREFERENCIAMENTO (DEREF) ===";
+  
+  (* Testes basicos de desreferenciamento *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 42), Deref(Id "r")))
+    "Teste DEREF1 (let r = new 42 in !r) - desreferencia inteiro";
+  teste_eval (Let("r", TyRef TyBool, New(Bool true), Deref(Id "r")))
+    "Teste DEREF2 (let r = new true in !r) - desreferencia booleano";
+  teste_eval (Let("r", TyRef TyUnit, New(Unit), Deref(Id "r")))
+    "Teste DEREF3 (let r = new () in !r) - desreferencia unit";
+    
+  (* Testes com expressoes *)
+  teste_eval (Let("r", TyRef TyInt, New(Binop(Sum, Num 10, Num 5)), Deref(Id "r")))
+    "Teste DEREF4 (let r = new (10 + 5) in !r) - desreferencia resultado de expressao";
+  teste_eval (Let("r", TyRef TyBool, New(Binop(Lt, Num 5, Num 10)), Deref(Id "r")))
+    "Teste DEREF5 (let r = new (5 < 10) in !r) - desreferencia resultado booleano";
+    
+  (* Teste de desreferenciamento de referencia para referencia *)
+  teste_eval (Let("r1", TyRef TyInt, New(Num 100),
+             Let("r2", TyRef (TyRef TyInt), New(Id "r1"),
+                Deref(Deref(Id "r2")))))
+    "Teste DEREF6 (desreferenciamento duplo) - !!r2 onde r2 aponta para r1";
+    
+  (* Teste de erro - tentar desreferenciar nao-referencia *)
+  teste_eval_erro (Deref(Num 42))
+    "Teste DEREF7 (!42) - deve dar erro (nao e referencia)";
+  teste_eval_erro (Deref(Bool true))
+    "Teste DEREF8 (!true) - deve dar erro (nao e referencia)";
+    
+  print_endline ""
+
+(* Função para testes de atribuição (ASG) *)
+let testes_atribuicao () =
+  print_endline "=== TESTES DE ATRIBUICAO (ASG) ===";
+  
+  (* Testes basicos de atribuicao *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 42), 
+             Seq(Asg(Id "r", Num 100), Deref(Id "r"))))
+    "Teste ASG1 (r := 100; !r) - atribuicao e leitura";
+  teste_eval (Let("r", TyRef TyBool, New(Bool false), 
+             Seq(Asg(Id "r", Bool true), Deref(Id "r"))))
+    "Teste ASG2 (r := true; !r) - atribuicao booleana";
+    
+  (* Testes com expressoes *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 0), 
+             Seq(Asg(Id "r", Binop(Sum, Num 10, Num 5)), Deref(Id "r"))))
+    "Teste ASG3 (r := 10+5; !r) - atribuicao de expressao";
+  teste_eval (Let("r", TyRef TyBool, New(Bool true), 
+             Seq(Asg(Id "r", Binop(Gt, Num 10, Num 5)), Deref(Id "r"))))
+    "Teste ASG4 (r := 10>5; !r) - atribuicao de comparacao";
+    
+  (* Teste de multiplas atribuicoes *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 1), 
+             Seq(Asg(Id "r", Num 2),
+             Seq(Asg(Id "r", Num 3), 
+             Deref(Id "r")))))
+    "Teste ASG5 (multiplas atribuicoes) - deve retornar ultimo valor";
+    
+  (* Teste de erro - tentar atribuir a nao-referencia *)
+  teste_eval_erro (Asg(Num 42, Num 100))
+    "Teste ASG6 (42 := 100) - deve dar erro (nao e referencia)";
+    
+  print_endline ""
+
+(* Função para testes de while (WH) *)
+let testes_while () =
+  print_endline "=== TESTES DE WHILE (WH) ===";
+  
+  (* Teste basico de while - loop que nao executa *)
+  teste_eval (Wh(Bool false, Print(Num 999)))
+    "Teste WH1 (while false do print 999) - nao deve executar";
+    
+  (* Teste de contador simples *)
+  teste_eval (Let("counter", TyRef TyInt, New(Num 0),
+             Seq(Wh(Binop(Lt, Deref(Id "counter"), Num 3),
+                   Asg(Id "counter", Binop(Sum, Deref(Id "counter"), Num 1))),
+                Deref(Id "counter"))))
+    "Teste WH2 (contador de 0 a 3) - deve retornar 3";
+    
+  (* Teste de loop com decremento *)
+  teste_eval (Let("counter", TyRef TyInt, New(Num 5),
+             Seq(Wh(Binop(Gt, Deref(Id "counter"), Num 0),
+                   Asg(Id "counter", Binop(Sub, Deref(Id "counter"), Num 1))),
+                Deref(Id "counter"))))
+    "Teste WH3 (contador de 5 a 0) - deve retornar 0";
+    
+  (* Teste de erro - condicao nao booleana *)
+  teste_eval_erro (Wh(Num 42, Unit))
+    "Teste WH4 (while 42 do ()) - deve dar erro (condicao nao booleana)";
+    
+  print_endline ""
+
+(* Função para testes de print *)
+let testes_print () =
+  print_endline "=== TESTES DE PRINT ===";
+  
+  (* Testes basicos de impressao *)
+  teste_eval (Print(Num 42))
+    "Teste PRINT1 (print 42) - imprime inteiro";
+  teste_eval (Print(Bool true))
+    "Teste PRINT2 (print true) - imprime booleano";
+  teste_eval (Print(Unit))
+    "Teste PRINT3 (print ()) - imprime unit";
+    
+  (* Teste com expressoes *)
+  teste_eval (Print(Binop(Sum, Num 10, Num 5)))
+    "Teste PRINT4 (print (10+5)) - imprime resultado de expressao";
+  teste_eval (Print(Binop(Lt, Num 5, Num 10)))
+    "Teste PRINT5 (print (5<10)) - imprime resultado booleano";
+    
+  (* Teste com referencias *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 100), Print(Deref(Id "r"))))
+    "Teste PRINT6 (print !r) - imprime valor da referencia";
+    
+  (* Teste de sequencia de prints *)
+  teste_eval (Seq(Print(Num 1), 
+             Seq(Print(Num 2), 
+                Print(Num 3))))
+    "Teste PRINT7 (sequencia de prints) - imprime 1, 2, 3";
+    
+  print_endline ""
+
+(* ===== FUNCOES DE TESTE ORGANIZADAS (CONTINUACAO) ===== *)
+(* Definições para testes interativos *)
+let teste1 = eval (Num 42) estado_inicial
+let teste2 = eval (Bool true) estado_inicial
+let teste3 = eval Unit estado_inicial
+
 (* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
 let () = 
-  print_endline "=== INICIANDO BATERIA DE TESTES ===";
+  print_endline "=== INICIANDO BATERIA DE TESTES COMPLETA ===";
   print_endline "";
   
   testes_literais ();
@@ -404,11 +536,10 @@ let () =
   testes_erros ();
   testes_logicos ();
   testes_referencias ();
+  testes_deref ();
+  testes_atribuicao ();
+  testes_while ();
+  testes_print ();
   
   print_endline "";
   print_endline "=== TODOS OS TESTES EXECUTADOS ==="
-
-(* Definições para testes interativos *)
-let teste1 = eval (Num 42) estado_inicial
-let teste2 = eval (Bool true) estado_inicial
-let teste3 = eval Unit estado_inicial
