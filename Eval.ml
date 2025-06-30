@@ -207,85 +207,171 @@ let rec step expr estado =
         (* Primeira expressão é valor: descarta e vai para a segunda *)
         (e2, estado)
   
-  (* NEW *)
+  (* NEW - Criação de referências (new expr) *)
   | New(expr) ->
+      (* NEW aloca um valor na memória e retorna uma referência para ele.
+         É a única operação que modifica o estado da memória durante a criação.
+         
+         Fluxo: new expr → aloca expr na memória → retorna referência temporária
+         Exemplo: new 42 → cria endereço 0 na memória → retorna Id("__ref_0")
+      *)
+      
       if not (is_value expr) then
-        (* Reduz a expressão *)
+        (* A expressão ainda não foi reduzida a um valor.
+           Exemplo: new (5 + 10)
+           Primeiro reduzimos (5 + 10) para 15, depois alocamos 15 na memória *)
         let (expr', estado') = step expr estado in
         (New(expr'), estado')
+        
       else
-        (* Expressão é valor: aloca na memória *)
+        (* A expressão é um valor: podemos alocar na memória *)
+        
+        (* Converte a expressão para o tipo valor interno *)
         let valor = expr_to_valor expr in
+        
+        (* Obtém o próximo endereço livre *)
         let endereco = estado.next_addr in
+        
+        (* Adiciona o valor à memória no novo endereço *)
         let nova_memoria = (endereco, valor) :: estado.mem in
+        
+        (* Atualiza o estado: nova memória + incrementa próximo endereço *)
         let novo_estado = {
-          env = estado.env;
-          mem = nova_memoria;
-          next_addr = estado.next_addr + 1;
+          env = estado.env;           (* Ambiente permanece igual *)
+          mem = nova_memoria;         (* Memória com novo valor *)
+          next_addr = estado.next_addr + 1;  (* Próximo endereço livre *)
         } in
+        
+        (* Retorna uma referência temporária para o valor alocado *)
+        (* Esta referência será processada pelo DEREF e ASG *)
         (Id ("__ref_" ^ string_of_int endereco), novo_estado)
   
-  (* DEREF *)
+  (* DEREF - Desreferenciamento (!expr) *)
   | Deref(expr) ->
-      (* Caso especial para referências temporárias *)
+      (* O desreferenciamento tem dois casos principais:
+         1. Referências temporárias (criadas pelo NEW)
+         2. Referências normais (variáveis que contêm VRef) *)
+      
       (match expr with
       | Id ref_name when String.length ref_name > 6 && String.sub ref_name 0 6 = "__ref_" ->
+          (* CASO 1: REFERÊNCIA TEMPORÁRIA *)
+          (* Este é um identificador especial criado internamente pelo NEW.
+             Formato: "__ref_N" onde N é o endereço na memória.
+             
+             Por exemplo: new 42 cria Id("__ref_0")
+             Quando fazemos !(new 42), chegamos aqui com ref_name = "__ref_0"
+          *)
+          
+          (* Extrai o endereço do nome temporário *)
           let addr = int_of_string (String.sub ref_name 6 (String.length ref_name - 6)) in
+          
+          (* Busca diretamente na memória usando o endereço *)
           let valor_armazenado = List.assoc addr estado.mem in
+          
+          (* Retorna o valor encontrado na memória *)
           (valor_to_expr valor_armazenado, estado)
+          
       | _ ->
+          (* CASO 2: EXPRESSÃO NORMAL (pode ser variável ou expressão complexa) *)
+          
           if not (is_value expr) then
-            (* Reduz a expressão *)
+            (* A expressão ainda não foi reduzida a um valor.
+               Por exemplo: !(if true then r else s)
+               Primeiro precisamos reduzir o IF para obter a referência. *)
             let (expr', estado') = step expr estado in
             (Deref(expr'), estado')
+            
           else
-            (* Expressão é valor: deve ser uma referência *)
+            (* A expressão já é um valor - deve ser uma referência *)
             let valor = expr_to_valor expr in
             (match valor with
             | VRef endereco ->
+                (* É uma referência válida: busca o valor na memória *)
                 let valor_armazenado = List.assoc endereco estado.mem in
                 (valor_to_expr valor_armazenado, estado)
+                
             | _ ->
+                (* Não é uma referência: erro de tipo *)
+                (* Por exemplo: !42, !true, !() são todos inválidos *)
                 raise (TiposIncompativeis "Desreferenciamento requer uma referência")))
   
-  (* ASSIGN *)
+  (* ASSIGN - Atribuição (ref := valor) *)
   | Asg(expr_ref, expr_valor) ->
-      (* Caso especial para referências temporárias *)
+      (* A atribuição tem dois casos principais, similar ao DEREF:
+         1. Referências temporárias (ex: (new 42) := 100)
+         2. Referências normais (ex: r := 100, onde r é uma variável)
+         
+         Ambos os operandos precisam ser reduzidos a valores antes da atribuição.
+         Ordem de avaliação: left-to-right (primeiro ref, depois valor)
+      *)
+      
       (match expr_ref with
       | Id ref_name when String.length ref_name > 6 && String.sub ref_name 0 6 = "__ref_" ->
+          (* CASO 1: REFERÊNCIA TEMPORÁRIA *)
+          (* Formato: "__ref_N" := valor
+             Exemplo: (new 42) := 100 
+             O NEW criou Id("__ref_0"), então temos "__ref_0" := 100
+          *)
+          
           if not (is_value expr_valor) then
-            (* Reduz o valor *)
+            (* O valor ainda não foi reduzido. 
+               Exemplo: r := (10 + 5)
+               Primeiro reduzimos (10 + 5) para 15 *)
             let (expr_valor', estado') = step expr_valor estado in
             (Asg(expr_ref, expr_valor'), estado')
+            
           else
+            (* Ambos estão prontos: ref é temporária, valor é final *)
+            
+            (* Extrai o endereço da referência temporária *)
             let addr = int_of_string (String.sub ref_name 6 (String.length ref_name - 6)) in
+            
+            (* Converte o valor para o tipo interno *)
             let novo_valor = expr_to_valor expr_valor in
+            
+            (* Atualiza a memória: substitui o valor no endereço *)
             let nova_memoria = List.map (fun (a, v) -> 
               if a = addr then (a, novo_valor) else (a, v)
             ) estado.mem in
+            
+            (* Retorna () e o novo estado da memória *)
             let novo_estado = { estado with mem = nova_memoria } in
             (Unit, novo_estado)
+            
       | _ ->
+          (* CASO 2: EXPRESSÃO NORMAL (variável ou expressão complexa) *)
+          
           if not (is_value expr_ref) then
-            (* Reduz a referência *)
+            (* A referência ainda não foi reduzida a um valor.
+               Exemplo: (if cond then r1 else r2) := 100
+               Primeiro reduzimos o IF para obter a referência *)
             let (expr_ref', estado') = step expr_ref estado in
             (Asg(expr_ref', expr_valor), estado')
+            
           else if not (is_value expr_valor) then
-            (* Reduz o valor *)
+            (* A referência está pronta, mas o valor não.
+               Exemplo: r := (5 + 10)
+               Reduzimos o valor mantendo a referência fixa *)
             let (expr_valor', estado') = step expr_valor estado in
             (Asg(expr_ref, expr_valor'), estado')
+            
           else
-            (* Ambos são valores: faz a atribuição *)
+            (* Ambos são valores: executa a atribuição *)
             let ref_val = expr_to_valor expr_ref in
             let novo_valor = expr_to_valor expr_valor in
+            
             (match ref_val with
             | VRef endereco ->
+                (* É uma referência válida: atualiza a memória *)
                 let nova_memoria = List.map (fun (a, v) -> 
                   if a = endereco then (a, novo_valor) else (a, v)
                 ) estado.mem in
                 let novo_estado = { estado with mem = nova_memoria } in
                 (Unit, novo_estado)
+                
             | _ ->
+                (* Não é uma referência: erro de tipo *)
+                (* Exemplos inválidos: 42 := 100, true := false, () := 10 *)
                 raise (TiposIncompativeis "Atribuição requer uma referência")))
   
   (* PRINT *)
@@ -376,31 +462,49 @@ let rec step expr estado =
    4. Repete até atingir forma normal
 *)
 let rec eval expr estado =
+  (* DEBUG: Log da expressão sendo avaliada (descomente se necessário) *)
+  (* Printf.printf "EVAL: %s\n" (string_of_expr expr); *)
+  
   match expr with
   (* VALORES FINAIS: Não precisam mais redução *)
-  | Num _ | Bool _ | Unit -> (expr_to_valor expr, estado)
+  | Num _ | Bool _ | Unit -> 
+      (* Expressão já é um valor - conversão direta para tipo valor *)
+      (expr_to_valor expr, estado)
   
-  (* EXPRESSÕES COMPLEXAS: Precisam redução *)
+  (* EXPRESSÕES COMPLEXAS: Precisam redução step-by-step *)
   | _ ->
     try
-      (* Aplica um passo de redução *)
+      (* PASSO 1: Tenta aplicar uma única redução small-step *)
       let (expr', estado') = step expr estado in
-      (* Continua recursivamente até valor final *)
+      
+      (* PASSO 2: Recursão - continua reduzindo até atingir valor final *)
+      (* Esta é a essência do small-step: redução iterativa *)
       eval expr' estado'
+      
     with
     | StuckExpression msg ->
-        (* Trata casos especiais que não podem ser representados 
-           como reduções simples na função step *)
+        (* TRATAMENTO DE CASOS ESPECIAIS *)
+        (* Algumas operações (como criação de referências) requerem 
+           coordenação especial entre step e eval via exceções *)
+        
+        (* Analisa a mensagem de exceção para determinar o tratamento *)
         (match msg with
         | s when String.length s > 10 && String.sub s 0 10 = "REF_VALUE:" ->
-            (* Referência temporária: retorna endereço diretamente *)
+            (* CASO ESPECIAL: Referência temporária *)
+            (* Quando uma referência temporária (__ref_N) é encontrada,
+               extraímos o endereço e retornamos como VRef *)
             let addr = int_of_string (String.sub s 10 (String.length s - 10)) in
             (VRef addr, estado)
+            
         | _ ->
-            (* Outros casos: verifica se é valor ou propaga erro *)
+            (* OUTROS CASOS *)
+            (* Verifica se a expressão atual já é um valor que não foi
+               reconhecido no pattern matching inicial *)
             if is_value expr then
+              (* Conversão direta para valor *)
               (expr_to_valor expr, estado)
             else
+              (* Erro real - expressão não pode ser reduzida *)
               failwith ("Expressão travada: " ^ msg))
 
 (* ===== ESTADO INICIAL ===== *)
