@@ -249,12 +249,17 @@ let rec eval expr estado =
           (* Erro se a condição não for booleana *)
           raise (TiposIncompativeis "Condição do IF deve ser booleana"))
   
-  (* CASOS NÃO IMPLEMENTADOS: New, Deref, Asg, Wh, Seq, Print, Read *)
+  | Seq(e1, e2) ->
+      (* SEQUENCIAMENTO: e1; e2 *)
+      (* Avalia e1, descarta seu valor, depois avalia e2 *)
+      let (_, estado1) = eval e1 estado in
+      eval e2 estado1
+  
+  (* CASOS NÃO IMPLEMENTADOS: New, Deref, Asg, Wh, Print, Read *)
   | New _ -> failwith "New não implementado ainda"
   | Deref _ -> failwith "Deref não implementado ainda"  
   | Asg (_, _) -> failwith "Asg não implementado ainda"
   | Wh (_, _) -> failwith "Wh não implementado ainda"
-  | Seq (_, _) -> failwith "Seq não implementado ainda"
   | Print _ -> failwith "Print não implementado ainda"
   | Read -> failwith "Read não implementado ainda"
 

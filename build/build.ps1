@@ -59,32 +59,39 @@ try {
 
 # Limpar arquivos compilados anteriores
 Write-Host "`nLimpando arquivos compilados anteriores..." -ForegroundColor Cyan
-Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe
+Remove-Item -Force -ErrorAction SilentlyContinue *.cmi, *.cmo, avaliador.exe, testes.exe, testes_interativo.exe
 
 # Compilar os módulos na ordem correta
-Write-Host "`n[1/5] Compilando Datatypes.ml..." -ForegroundColor White
+Write-Host "`n[1/7] Compilando Datatypes.ml..." -ForegroundColor White
 ocamlc -c Datatypes.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Datatypes.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[2/5] Compilando Eval.ml..." -ForegroundColor White
+Write-Host "`n[2/7] Compilando Eval.ml..." -ForegroundColor White
 ocamlc -c Eval.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Eval.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[3/5] Compilando Test.ml..." -ForegroundColor White
+Write-Host "`n[3/7] Compilando Test.ml..." -ForegroundColor White
 ocamlc -c Test.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
+Write-Host "`n[4/7] Compilando Test_Interactive.ml..." -ForegroundColor White
+ocamlc -c Test_Interactive.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao compilar Test_Interactive.ml" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
 # Compilar o avaliador
-Write-Host "`n[4/5] Criando executavel avaliador..." -ForegroundColor White
+Write-Host "`n[5/7] Criando executavel avaliador..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o avaliador.exe Datatypes.ml Eval.ml 2>$null
@@ -103,7 +110,7 @@ try {
 }
 
 # Compilar os testes
-Write-Host "`n[5/6] Criando executavel de testes..." -ForegroundColor White
+Write-Host "`n[6/7] Criando executavel de testes..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes.exe Datatypes.ml Eval.ml Test.ml 2>$null
@@ -122,7 +129,7 @@ try {
 }
 
 # Compilar o sistema de testes interativo
-Write-Host "`n[6/6] Criando executavel de testes interativo..." -ForegroundColor White
+Write-Host "`n[7/7] Criando executavel de testes interativo..." -ForegroundColor White
 # Tentar compilação nativa primeiro, depois bytecode
 try {
     & ocamlopt -o testes_interativo.exe Datatypes.ml Eval.ml Test_Interactive.ml 2>$null

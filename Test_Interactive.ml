@@ -324,6 +324,37 @@ let testes_variaveis () =
     "Teste VAR18 (let a=2 in let b=3 in let c=4 in ((a*b)+c)) = 10";
   print_endline ""
 
+(* 10. Testes de Sequenciamento (Seq) *)
+let testes_sequenciamento () =
+  print_endline "=== TESTES DE SEQUENCIAMENTO (SEQ) ===";
+  
+  (* Testes básicos de sequenciamento *)
+  teste_eval (Seq(Num 5, Num 10)) 
+    "Teste SEQ1 (5; 10) = 10 - descarta primeiro valor";
+  teste_eval (Seq(Bool true, Bool false)) 
+    "Teste SEQ2 (true; false) = false";
+  teste_eval (Seq(Unit, Num 42)) 
+    "Teste SEQ3 ((); 42) = 42";
+    
+  (* Testes com expressões complexas *)
+  teste_eval (Seq(Binop(Sum, Num 2, Num 3), Binop(Mul, Num 4, Num 5)))
+    "Teste SEQ4 ((2+3); (4*5)) = 20 - descarta resultado da soma";
+  
+  (* Testes aninhados *)
+  teste_eval (Seq(Seq(Num 1, Num 2), Num 3))
+    "Teste SEQ5 ((1; 2); 3) = 3 - sequenciamento aninhado";
+    
+  (* Testes com variáveis *)
+  teste_eval (Let("x", TyInt, Num 10,
+                 Seq(Id "x", Binop(Sum, Id "x", Num 5))))
+    "Teste SEQ6 (let x=10 in (x; x+5)) = 15";
+    
+  (* Testes com condicionais *)
+  teste_eval (Seq(If(Bool true, Num 1, Num 2), Num 100))
+    "Teste SEQ7 ((if true then 1 else 2); 100) = 100";
+    
+  print_endline ""
+
 (* ===== MENU INTERATIVO ===== *)
 
 let mostrar_menu () =
@@ -343,10 +374,11 @@ let mostrar_menu () =
   print_endline "  7. Expressões Complexas";
   print_endline "  8. Expressões Condicionais (IF)";
   print_endline "  9. Variáveis (LET/ID)";
-  print_endline " 10. Executar TODOS os testes";
+  print_endline " 10. Sequenciamento (SEQ)";
+  print_endline " 11. Executar TODOS os testes";
   print_endline "  0. Sair";
   print_endline "";
-  print_string "Digite sua opção (0-10): ";
+  print_string "Digite sua opção (0-11): ";
   flush_all ()
 
 let executar_todos_testes () =
@@ -361,6 +393,7 @@ let executar_todos_testes () =
   testes_expressoes_complexas ();
   testes_if ();
   testes_variaveis ();
+  testes_sequenciamento ();
   print_endline "=== TODOS OS TESTES CONCLUÍDOS ===";
   print_endline ""
 
@@ -382,14 +415,15 @@ let rec loop_principal () =
      | 7 -> testes_expressoes_complexas (); loop_principal ()
      | 8 -> testes_if (); loop_principal ()
      | 9 -> testes_variaveis (); loop_principal ()
-     | 10 -> executar_todos_testes (); loop_principal ()
+     | 10 -> testes_sequenciamento (); loop_principal ()
+     | 11 -> executar_todos_testes (); loop_principal ()
      | _ -> 
          print_endline "Opção inválida! Tente novamente.";
          print_endline "";
          loop_principal ())
   with
   | Failure _ ->
-      print_endline "Entrada inválida! Digite um número entre 0 e 10.";
+      print_endline "Entrada inválida! Digite um número entre 0 e 11.";
       print_endline "";
       loop_principal ()
 

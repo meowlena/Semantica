@@ -7,7 +7,7 @@ ROOT_DIR = ..
 OCAMLC = ocamlc
 
 # Arquivos fonte (com caminho relativo)
-SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Test.ml
+SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Test_Interactive.ml
 OBJECTS = $(notdir $(SOURCES:.ml=.cmo))
 
 # Diretório de trabalho
@@ -16,7 +16,7 @@ set-workdir:
 	cd $(ROOT_DIR)
 
 # Alvos principais
-all: set-workdir avaliador testes
+all: set-workdir avaliador testes testes_interativo
 
 # Compilar o avaliador (sem executar os testes)
 avaliador: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
@@ -25,6 +25,10 @@ avaliador: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
 # Compilar e linkar testes
 testes: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Test.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -o testes Datatypes.cmo Eval.cmo Test.cmo
+
+# Compilar e linkar testes interativos
+testes_interativo: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Test_Interactive.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -o testes_interativo Datatypes.cmo Eval.cmo Test_Interactive.cmo
 
 # Compilar módulos individuais
 $(ROOT_DIR)/Datatypes.cmo: $(ROOT_DIR)/Datatypes.ml
@@ -36,12 +40,15 @@ $(ROOT_DIR)/Eval.cmo: $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Datatypes.cmo
 $(ROOT_DIR)/Test.cmo: $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -c Test.ml
 
+$(ROOT_DIR)/Test_Interactive.cmo: $(ROOT_DIR)/Test_Interactive.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -c Test_Interactive.ml
+
 # Limpar arquivos compilados
 clean:
-	cd $(ROOT_DIR) && rm -f *.cmi *.cmo avaliador avaliador.tmp testes testes.tmp
+	cd $(ROOT_DIR) && rm -f *.cmi *.cmo avaliador avaliador.tmp testes testes.tmp testes_interativo testes_interativo.tmp
 
 # Regras para Windows (PowerShell)
 win-clean:
-	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe -ErrorAction SilentlyContinue"
+	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe, testes_interativo, testes_interativo.exe, testes_interativo.tmp, testes_interativo.tmp.exe -ErrorAction SilentlyContinue"
 
-.PHONY: all clean win-clean avaliador testes
+.PHONY: all clean win-clean avaliador testes testes_interativo
