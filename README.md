@@ -104,18 +104,42 @@ let result = eval (Binop(Sum, Num 10, Num 20)) estado_inicial;;
 
 ## Implementação Atual
 
-O avaliador atualmente suporta:
-- Literais: números, booleanos e unit
-- Operações aritméticas: soma, subtração, multiplicação, divisão
-- Operadores de comparação: <, >, =, !=
-- Operações lógicas: and, or
+O avaliador atualmente suporta **todas** as funcionalidades da linguagem especificada:
 
-## Próximos Passos
+### Construtos Básicos
+- **Literais**: números inteiros (`Num`), booleanos (`Bool`) e unit (`Unit`)
+- **Operações aritméticas**: soma (`+`), subtração (`-`), multiplicação (`*`), divisão (`/`)
+- **Operadores de comparação**: menor que (`<`), maior que (`>`), igualdade (`=`), diferença (`!=`)
+- **Operações lógicas**: conjunção (`AND`), disjunção (`OR`) com avaliação por curto-circuito
 
-- Implementar variáveis (`Let` e `Id`)
-- Implementar manipulação de memória (`New`, `Deref`, `Asg`)
-- Implementar controle de fluxo (`If`, `Wh`, `Seq`)
-- Implementar I/O (`Print`, `Read`)
+### Controle de Fluxo
+- **Expressões condicionais**: `If then else` com verificação de tipos
+- **Variáveis**: declaração (`Let`) e referência (`Id`) com escopo correto
+- **Sequenciamento**: execução sequencial de comandos (`Seq`)
+- **Laços**: `While` loops com condições booleanas
+
+### Gerenciamento de Memória
+- **Criação de referências**: `New` para alocar valores na memória
+- **Desreferenciamento**: `Deref` (`!`) para acessar valores de referências
+- **Atribuição**: `Asg` (`:=`) para modificar valores em referências
+
+### Entrada/Saída
+- **Impressão**: `Print` para exibir valores no console
+- **Leitura**: `Read` para ler valores inteiros da entrada padrão
+
+### Executáveis Disponíveis
+- **`avaliador`**: Executa um programa de exemplo (cálculo de fatorial)
+- **`testes`**: Executa toda a bateria de testes automatizada
+- **`testes_interativo`**: Interface interativa para executar testes específicos
+
+### Tratamento de Erros
+O avaliador detecta e reporta corretamente:
+- Divisão por zero
+- Tipos incompatíveis em operações
+- Variáveis não declaradas
+- Desreferenciamento de valores não-referência
+- Atribuição a valores não-referência
+- Condições não-booleanas em `If` e `While`
 
 ## Solução de Problemas Comuns
 
