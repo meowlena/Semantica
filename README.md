@@ -138,6 +138,5 @@ Foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar
 - Geração da documentação (README.md, comentários no código)
 - Criação dos scripts de compilação (build/)
 - Elaboração dos testes automatizados (Test.ml)
-- Criação do Makefile e scripts multiplataforma
 
 O código do avaliador em si (a lógica semântica) foi implementado manualmente, seguindo as especificações formais do trabalho, sem assistência direta de IA.
