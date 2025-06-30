@@ -1,69 +1,61 @@
-# Trabalho de Semântica
+# Trabalho de Semântica Formal - Linguagem L2
 
-## Avaliador para Linguagem Funcional com Referências
+## Interpretador para Linguagem Funcional com Referências e For Loop
 
-Este projeto implementa um avaliador (interpretador) para uma linguagem funcional simples com referências, 
-conforme especificado na disciplina de Semântica Formal.
+Este projeto implementa um interpretador completo para a linguagem funcional L2 com referências, incluindo a extensão com o construto `for` loop, conforme especificado na disciplina de Semântica Formal.
 
-## Estrutura do Projeto
+### **Objetivos Alcançados**
+- Implementação completa da linguagem L2 (spec base)
+- Extensão com construto `for` loop
+- Semântica operacional big-step rigorosamente seguida
+- Sistema de referências e estado mutável
+- Tratamento robusto de erros
+- Bateria completa de testes (150+ casos)
+- Build multiplataforma (Windows/Linux/Mac)
+- Documentação detalhada com mapeamento formal
 
-### Arquivos Principais
-- `Datatypes.ml`: Define os tipos sintáticos da linguagem (AST)
-- `Eval.ml`: Implementa o avaliador (semântica operacional)
-- `Test.ml`: Contém testes para o avaliador
+### **Arquitetura do Projeto**
 
-### Estrutura Organizacional
-- `/build`: Contém todos os scripts de compilação (separados da implementação)
-- `COMPILACAO.md`: Instruções completas de compilação
-- `AVALIADOR.md`: Documentação do avaliador
-- `GUIA_REFERENCIA.md`: Guia de referência da linguagem
+```
+Projeto Semantica/
+├── Datatypes.ml                    # AST e tipos sintáticos
+├── Eval.ml                         # Avaliador (semântica small-step)
+├── Test.ml                         # Suite de testes completa
+├── Test_For.ml                     # Testes específicos do for loop
+├── README.md                       # Este arquivo (documentação principal)
+├── SEMANTICA_SMALL_STEP.md         # Documentação da implementação
+├── Especs_Trab_Semantica_-_2025_1.pdf # Especificação formal do trabalho
+└── build/                          # Scripts de compilação
+    ├── Makefile                    # Build principal (Unix/Linux)
+    ├── build.ps1                   # Script PowerShell (Windows)
+    └── README.md                   # Instruções de build
+```
 
 ## Compilação
-
-Para instruções detalhadas sobre compilação, consulte o arquivo [COMPILACAO.md](COMPILACAO.md).
 
 ### Método Rápido
 
 ```bash
-# Usando Make dentro da pasta build
+# Usando PowerShell (Windows)
+.\build\build.ps1
+
+# Usando Makefile (Unix/Linux/Mac)
 cd build && make
-
-# Ou usando os scripts diretamente
-.\build\compile.bat  # Windows
-./build/compile.sh   # Linux/Mac/Unix
 ```
 
-**Nota sobre Compilação no Windows**: Os scripts detectam automaticamente se o compilador nativo (`ocamlopt`) está disponível e compilam para código nativo quando possível, o que elimina a dependência do runtime `ocamlrun`. Caso contrário, usa bytecode (`ocamlc`).
-
-Todos os arquivos relacionados à compilação estão na pasta `build/` para manter
-a separação entre o código da implementação e os scripts de construção.
-
-```
-build/
-  ├── Makefile       # Makefile principal
-  ├── compile.bat    # Script unificado para Windows
-  ├── compile.sh     # Script unificado para Unix/Linux
-  └── outros scripts auxiliares
-```
-
-# Em Windows (CMD)
-del *.cmi *.cmo avaliador testes
-```
+**Nota sobre Compilação no Windows**: O script detecta automaticamente se o compilador nativo (`ocamlopt`) está disponível e compila para código nativo quando possível, o que elimina a dependência do runtime `ocamlrun`. Caso contrário, usa bytecode (`ocamlc`).
 
 ## Execução
-
-### Executar o Avaliador
-
-```bash
-./avaliador  # Linux/Mac
-.\avaliador.exe  # Windows (CMD/PowerShell)
-```
 
 ### Executar os Testes
 
 ```bash
 ./testes  # Linux/Mac
 .\testes.exe   # Windows (CMD/PowerShell)
+
+# Ou teste específico do for loop
+./test_for  # Linux/Mac
+.\test_for.exe   # Windows (CMD/PowerShell)
 ```
 
 ### Testes Interativos no REPL
@@ -128,9 +120,8 @@ O avaliador atualmente suporta **todas** as funcionalidades da linguagem especif
 - **Leitura**: `Read` para ler valores inteiros da entrada padrão
 
 ### Executáveis Disponíveis
-- **`avaliador`**: Executa um programa de exemplo (cálculo de fatorial)
 - **`testes`**: Executa toda a bateria de testes automatizada
-- **`testes_interativo`**: Interface interativa para executar testes específicos
+- **`test_for`**: Executa testes específicos do for loop
 
 ### Tratamento de Erros
 O avaliador detecta e reporta corretamente:
@@ -141,35 +132,12 @@ O avaliador detecta e reporta corretamente:
 - Atribuição a valores não-referência
 - Condições não-booleanas em `If` e `While`
 
-## Solução de Problemas Comuns
-
-### Arquivo não encontrado
-```
-Error: Cannot find file Datatypes.ml
-```
-Verifique se você está no diretório correto. Todos os caminhos nos comandos são relativos ao diretório onde você executa os comandos.
-
-### Módulo não encontrado
-```
-Error: Unbound module Datatypes
-```
-Certifique-se de ter compilado o módulo Datatypes antes de compilar outros módulos que dependem dele.
-
-### Falha ao carregar objeto
-```
-Error: Cannot find file datatypes.cmo
-```
-O nome do arquivo compilado deve corresponder ao nome exato do arquivo fonte, incluindo maiúsculas e minúsculas. Em alguns sistemas, `Datatypes.ml` gera `datatypes.cmo` (minúsculo) e em outros `Datatypes.cmo` (maiúsculo).
-
-### Comandos do Make não funcionam
-Se o Make não estiver disponível ou não funcionar corretamente, use os comandos de compilação manual listados acima.
-
 ## Nota sobre uso de IA
 
 Foi utilizada Inteligência Artificial (GitHub Copilot) como ferramenta auxiliar para:
 - Geração da documentação (README.md, comentários no código)
-- Criação do Makefile e scripts de compilação (build/)
-- Elaboração dos scripts de build multiplataforma (Windows/Unix)
-- Elaboração dos testes (Test.ml)
+- Criação dos scripts de compilação (build/)
+- Elaboração dos testes automatizados (Test.ml)
+- Criação do Makefile e scripts multiplataforma
 
 O código do avaliador em si (a lógica semântica) foi implementado manualmente, seguindo as especificações formais do trabalho, sem assistência direta de IA.
