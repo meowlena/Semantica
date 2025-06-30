@@ -271,16 +271,9 @@ Na pasta `build/` estão disponíveis scripts para diferentes plataformas:
 ```bash
 # Windows (PowerShell)
 .\build\build.ps1       # Build completo
-.\build\compile.ps1     # Apenas compilação
-
-# Windows (Batch)
-.\build\build.bat       # Build completo  
-.\build\compile.bat     # Apenas compilação
 
 # Linux/Mac
-./build/build.sh        # Build completo
-./build/compile.sh      # Apenas compilação
-./build/Makefile        # Build via make
+make -C build           # Build via Makefile
 ```
 
 ### Compilação Manual
@@ -303,12 +296,8 @@ ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.ml
 # Todos os testes automáticos
 .\testes.exe
 
-# Teste específico do for loop (interativo)
+# Teste específico do for loop
 .\test_for.exe
-
-# Outros programas
-.\avaliador.exe           # Avaliador principal
-.\testes_interativo.exe   # Testes interativos
 ```
 
 ### Resultados Esperados
