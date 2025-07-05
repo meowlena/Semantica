@@ -51,7 +51,7 @@ cd build && make
 
 ```bash
 ./testes  # Linux/Mac
-.\testes.exe   # Windows (CMD/PowerShell)
+.\test.exe   # Windows (CMD/PowerShell)
 
 # Ou teste específico do for loop
 ./test_for  # Linux/Mac

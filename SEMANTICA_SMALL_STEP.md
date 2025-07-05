@@ -286,7 +286,7 @@ ocamlc -c Test.ml
 ocamlc -c Test_For.ml
 
 # Gerar executáveis
-ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
+ocamlc -o test.exe Datatypes.cmo Eval.cmo Test.cmo
 ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.ml
 ```
 
@@ -294,7 +294,7 @@ ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.ml
 
 ```bash
 # Todos os testes automáticos
-.\testes.exe
+.\test.exe
 
 # Teste específico do for loop
 .\test_for.exe
