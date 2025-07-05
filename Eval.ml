@@ -437,19 +437,19 @@ let rec step expr estado =
               for i = start to end do body
               ≡ 
               let counter = new start in
-              while (!counter <= end) do (
+              while (!counter < end + 1) do (
                 let i = !counter in (
                   body;
                   counter := !counter + 1
                 )
               )
+              (* Nota: !counter < (end + 1) é equivalente a !counter <= end *)
             *)
             let counter_name = "counter" in
             let ref_expr = New(start_expr) in
             let counter_ref = Id counter_name in
             let counter_deref = Deref(counter_ref) in
             let cond = Binop(Lt, counter_deref, Binop(Sum, end_expr, Num 1)) in
-            let body_with_var = Let(var_name, TyInt, counter_deref, body_expr) in
             let increment = Asg(counter_ref, Binop(Sum, counter_deref, Num 1)) in
             let while_body = Let(var_name, TyInt, counter_deref, Seq(body_expr, increment)) in
             (Let(counter_name, TyRef TyInt, ref_expr, Wh(cond, while_body)), estado)
