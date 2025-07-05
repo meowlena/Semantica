@@ -257,9 +257,10 @@ let rec step expr estado =
         
         (* Atualiza o estado: nova memória + incrementa próximo endereço *)
         let novo_estado = {
-          env = estado.env;           (* Ambiente permanece igual *)
-          mem = nova_memoria;         (* Memória com novo valor *)
-          next_addr = estado.next_addr + 1;  (* Próximo endereço livre *)
+          env = estado.env;                     (* Ambiente permanece igual *)
+          mem = nova_memoria;                   (* Memória com novo valor *)
+          next_addr = estado.next_addr + 1;     (* Próximo endereço livre *)
+          input_buffer = estado.input_buffer;   (* Buffer permanece igual *)
         } in
         
         (* Retorna uma referência direta (valor) *)
