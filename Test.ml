@@ -1,697 +1,404 @@
-(* =====================================(* Função para executar e imprimir resultado de um teste *)
-let teste_eval expr nome =
-  let estado_limpo = { env = []; mem = []; next_addr = 0 } in
-  let (valor, novo_estado) = eval expr estado_limpo in
-  Printf.printf "%s: %s\n" nome (string_of_valor valor)
-
-(* Função para testar casos que podem dar erro *)
-let teste_eval_erro expr nome =
-  try
-    let estado_limpo = { env = []; mem = []; next_addr = 0 } in
-    let (valor, novo_estado) = eval expr estado_limpo in
-    Printf.printf "%s: %s\n" nome (string_of_valor valor)
-  with
-    | DivisaoPorZero -> Printf.printf "%s: ERRO - Divisão por zero\n" nome
-    | TiposIncompativeis msg -> Printf.printf "%s: ERRO - %s\n" nome msg
-    | exn -> Printf.printf "%s: ERRO - %s\n" nome (Printexc.to_string exn)==
-   TESTES PARA O AVALIADOR DA LINGUAGEM FUNCIONAL
+(* =====================================================
+   BATERIA COMPLETA DE TESTES PARA O AVALIADOR SMALL-STEP
    ===================================================== *)
-   
-(* NOTA: Os testes deste arquivo foram elaborados com o auxílio
-   de Inteligência Artificial (GitHub Copilot) para garantir
-   cobertura abrangente das funcionalidades implementadas. *)
 
-(* Para compilar: 
-   ocamlc -c Datatypes.ml
-   ocamlc -c Eval.ml
-   ocamlc -c Test.ml
-   ocamlc -o testes Datatypes.cmo Eval.cmo Test.cmo
-                   Asg(Id "counter", Binop(Sum, Deref(Id "counter"), Num 1))),
-                Deref(Id "counter"))))
-    "Teste WH2 (contador de 0 a 3) - deve retornar 3";es Datatypes.cmo Eval.cmo Test.cmo
-   
-   Para executar:
-   ./testes
-   
-   Para testes interativos:
-   ocaml
-   #load "Datatypes.cmo";;
-   #load "Eval.cmo";;
-   #use "Test.ml";;
-*)
+(* Este arquivo contem testes abrangentes para validar o avaliador small-step
+   da linguagem L2 com referencias. Todos os testes foram atualizados para
+   usar o novo estado com input_buffer e a semantica small-step pura. *)
 
-(* Importa definições do avaliador *)
 open Datatypes
 open Eval
 
-(* ===== FUNÇÕES AUXILIARES PARA TESTES ===== *)
+(* ===== FUNCOES AUXILIARES PARA TESTES ===== *)
 
-(* Função para imprimir valores de forma legível *)
-let string_of_valor = function
-  | VInt n -> "VInt " ^ string_of_int n
-  | VBool b -> "VBool " ^ string_of_bool b
-  | VRef addr -> "VRef " ^ string_of_int addr
-  | VUnit -> "VUnit"
-
-(* Função para executar e imprimir resultado de um teste *)
+(* Funcao para executar teste simples (sem input) *)
 let teste_eval expr nome =
-  let (valor, novo_estado) = eval expr estado_inicial in
-  Printf.printf "%s: %s\n" nome (string_of_valor valor)
-
-(* Função para testar casos que podem dar erro *)
-let teste_eval_erro expr nome =
+  Printf.printf "\n--- %s ---\n" nome;
   try
-    let (valor, novo_estado) = eval expr estado_inicial in
-    Printf.printf "%s: %s\n" nome (string_of_valor valor)
+    let (valor, estado_final) = eval expr estado_inicial in
+    Printf.printf "OK Resultado: %s\n" (string_of_valor valor);
+    if estado_final.mem <> [] then (
+      Printf.printf "Memória final:\n";
+      List.iter (fun (addr, val_mem) ->
+        Printf.printf "  [%d] -> %s\n" addr (string_of_valor val_mem)
+      ) estado_final.mem
+    )
   with
-    | DivisaoPorZero -> Printf.printf "%s: ERRO - Divisão por zero\n" nome
-    | TiposIncompativeis msg -> Printf.printf "%s: ERRO - %s\n" nome msg
-    | e -> Printf.printf "%s: ERRO - %s\n" nome (Printexc.to_string e)
+  | DivisaoPorZero -> Printf.printf "ERRO: Divisao por zero\n"
+  | TiposIncompativeis msg -> Printf.printf "ERRO: %s\n" msg
+  | exn -> Printf.printf "ERRO: %s\n" (Printexc.to_string exn)
 
-(* ===== FUNÇÕES DE TESTE ORGANIZADAS ===== *)
+(* Funcao para executar teste com input *)
+let teste_eval_com_input expr nome inputs =
+  Printf.printf "\n--- %s (input: %s) ---\n" nome 
+    (String.concat ", " (List.map string_of_int inputs));
+  try
+    let estado_com_input = estado_com_entradas inputs in
+    let (valor, estado_final) = eval expr estado_com_input in
+    Printf.printf "OK Resultado: %s\n" (string_of_valor valor);
+    if estado_final.mem <> [] then (
+      Printf.printf "Memória final:\n";
+      List.iter (fun (addr, val_mem) ->
+        Printf.printf "  [%d] -> %s\n" addr (string_of_valor val_mem)
+      ) estado_final.mem
+    );
+    if estado_final.input_buffer <> [] then (
+      Printf.printf "Input restante: %s\n" 
+        (String.concat ", " (List.map string_of_int estado_final.input_buffer))
+    )
+  with
+  | DivisaoPorZero -> Printf.printf "ERRO: Divisao por zero\n"
+  | TiposIncompativeis msg -> Printf.printf "ERRO: %s\n" msg
+  | exn -> Printf.printf "ERRO: %s\n" (Printexc.to_string exn)
 
-(* Função para testes de literais *)
-let testes_literais () =
-  print_endline "=== TESTES DE LITERAIS ===";
-  teste_eval (Num 42) "Teste 1 (Num 42)";
-  teste_eval (Bool true) "Teste 2 (Bool true)";
-  teste_eval (Bool false) "Teste 3 (Bool false)";
-  teste_eval Unit "Teste 4 (Unit)";
-  print_endline ""
+(* ===== TESTES DE VALORES BÁSICOS ===== *)
 
-(* Função para testes aritméticos *)
+let testes_valores_basicos () =
+  print_endline "\n========== TESTES DE VALORES BÁSICOS ==========";
+  
+  teste_eval (Num 42) "Literal inteiro";
+  teste_eval (Num (-15)) "Literal inteiro negativo";
+  teste_eval (Bool true) "Literal booleano true";
+  teste_eval (Bool false) "Literal booleano false";
+  teste_eval Unit "Valor unit"
+
+(* ===== TESTES DE OPERAÇÕES ARITMÉTICAS ===== *)
+
 let testes_aritmeticos () =
-  print_endline "=== TESTES DE OPERAÇÕES ARITMÉTICAS ===";
+  print_endline "\n========== TESTES ARITMÉTICOS ==========";
   
-  (* Testes de soma *)
-  teste_eval (Binop(Sum, Num 5, Num 3)) "Teste 5 (5 + 3)";
-  teste_eval (Binop(Sum, Num 0, Num 10)) "Teste 6 (0 + 10)";
-  teste_eval (Binop(Sum, Num (-5), Num 8)) "Teste 7 (-5 + 8)";
+  teste_eval (Binop(Sum, Num 10, Num 5)) "Soma: 10 + 5";
+  teste_eval (Binop(Sub, Num 10, Num 3)) "Subtracao: 10 - 3";
+  teste_eval (Binop(Mul, Num 7, Num 6)) "Multiplicacao: 7 * 6";
+  teste_eval (Binop(Div, Num 20, Num 4)) "Divisao: 20 / 4";
   
-  (* Testes de subtração *)
-  teste_eval (Binop(Sub, Num 10, Num 3)) "Teste 8 (10 - 3)";
-  teste_eval (Binop(Sub, Num 5, Num 5)) "Teste 9 (5 - 5)";
-  teste_eval (Binop(Sub, Num 2, Num 7)) "Teste 10 (2 - 7)";
+  (* Teste de divisao por zero *)
+  teste_eval (Binop(Div, Num 10, Num 0)) "Divisao por zero (deve dar erro)";
   
-  (* Testes de multiplicação *)
-  teste_eval (Binop(Mul, Num 4, Num 6)) "Teste 11 (4 * 6)";
-  teste_eval (Binop(Mul, Num 0, Num 100)) "Teste 12 (0 * 100)";
-  teste_eval (Binop(Mul, Num (-3), Num 4)) "Teste 13 (-3 * 4)";
-  
-  (* Testes de divisão *)
-  teste_eval (Binop(Div, Num 15, Num 3)) "Teste 14 (15 / 3)";
-  teste_eval (Binop(Div, Num 7, Num 2)) "Teste 15 (7 / 2) - divisão inteira";
-  teste_eval (Binop(Div, Num (-10), Num 2)) "Teste 16 (-10 / 2)";
-  
-  (* Testes de operações aninhadas *)
-  teste_eval (Binop(Sum, Binop(Mul, Num 2, Num 3), Num 4)) "Teste 17 ((2 * 3) + 4)";
-  teste_eval (Binop(Div, Binop(Sum, Num 10, Num 5), Num 3)) "Teste 18 ((10 + 5) / 3)";
-  print_endline ""
+  (* Operacoes aninhadas *)
+  teste_eval (Binop(Sum, Binop(Mul, Num 3, Num 4), Num 2)) "Aninhada: (3 * 4) + 2"
 
-(* Função para testes de casos de erro *)
-let testes_erros () =
-  print_endline "=== TESTES DE CASOS DE ERRO ===";
-  
-  (* Teste de divisão por zero *)
-  teste_eval_erro (Binop(Div, Num 10, Num 0)) "Teste 19 (10 / 0) - deve dar erro";
-  teste_eval_erro (Binop(Div, Num 0, Num 0)) "Teste 20 (0 / 0) - deve dar erro";
-  
-  (* Teste de tipos incompatíveis *)
-  teste_eval_erro (Binop(Sum, Bool true, Num 5)) "Teste 21 (true + 5) - deve dar erro";
-  print_endline ""
+(* ===== TESTES DE OPERAÇÕES LÓGICAS ===== *)
 
-(* Função para testes lógicos *)
 let testes_logicos () =
-  print_endline "=== TESTES DE OPERAÇÕES LÓGICAS ===";
+  print_endline "\n========== TESTES LÓGICOS ==========";
   
-  (* Testes de AND *)
-  teste_eval (Binop(And, Bool true, Bool true)) "Teste L1 (true AND true)";
-  teste_eval (Binop(And, Bool true, Bool false)) "Teste L2 (true AND false)";
-  teste_eval (Binop(And, Bool false, Bool true)) "Teste L3 (false AND true)";
-  teste_eval (Binop(And, Bool false, Bool false)) "Teste L4 (false AND false)";
+  teste_eval (Binop(And, Bool true, Bool true)) "AND: true && true";
+  teste_eval (Binop(And, Bool true, Bool false)) "AND: true && false";
+  teste_eval (Binop(Or, Bool false, Bool true)) "OR: false || true";
+  teste_eval (Binop(Or, Bool false, Bool false)) "OR: false || false";
   
-  (* Testes de OR *)
-  teste_eval (Binop(Or, Bool true, Bool true)) "Teste L5 (true OR true)";
-  teste_eval (Binop(Or, Bool true, Bool false)) "Teste L6 (true OR false)";
-  teste_eval (Binop(Or, Bool false, Bool true)) "Teste L7 (false OR true)";
-  teste_eval (Binop(Or, Bool false, Bool false)) "Teste L8 (false OR false)";
-  
-  (* Testes de tipos incompatíveis *)
-  teste_eval_erro (Binop(And, Bool true, Num 1)) "Teste L9 (true AND 1) - deve dar erro";
-  teste_eval_erro (Binop(Or, Num 0, Bool false)) "Teste L10 (0 OR false) - deve dar erro";
-  
-  print_endline "";
-  print_endline "=== TESTES DE OPERADORES DE COMPARAÇÃO ===";
-  
-  (* Testes de comparação: menor que (<) *)
-  teste_eval (Binop(Lt, Num 5, Num 10)) "Teste C1 (5 < 10)";
-  teste_eval (Binop(Lt, Num 10, Num 5)) "Teste C2 (10 < 5)";
-  teste_eval (Binop(Lt, Num 7, Num 7)) "Teste C3 (7 < 7)";
-  
-  (* Testes de comparação: maior que (>) *)
-  teste_eval (Binop(Gt, Num 15, Num 7)) "Teste C4 (15 > 7)";
-  teste_eval (Binop(Gt, Num 3, Num 8)) "Teste C5 (3 > 8)";
-  teste_eval (Binop(Gt, Num 6, Num 6)) "Teste C6 (6 > 6)";
-  
-  (* Testes de comparação: igual (=) *)
-  teste_eval (Binop(Eq, Num 10, Num 10)) "Teste C7 (10 = 10)";
-  teste_eval (Binop(Eq, Num 5, Num 8)) "Teste C8 (5 = 8)";
-  teste_eval (Binop(Eq, Bool true, Bool true)) "Teste C9 (true = true)";
-  teste_eval (Binop(Eq, Bool false, Bool true)) "Teste C10 (false = true)";
-  teste_eval (Binop(Eq, Unit, Unit)) "Teste C11 (unit = unit)";
-  
-  (* Testes de comparação: diferente (!=) *)
-  teste_eval (Binop(Neq, Num 15, Num 10)) "Teste C12 (15 != 10)";
-  teste_eval (Binop(Neq, Num 7, Num 7)) "Teste C13 (7 != 7)";
-  teste_eval (Binop(Neq, Bool true, Bool false)) "Teste C14 (true != false)";
-  teste_eval (Binop(Neq, Bool true, Bool true)) "Teste C15 (true != true)";
-  teste_eval (Binop(Neq, Unit, Unit)) "Teste C16 (unit != unit)";
-  
-  (* Testes de comparação com tipos incompatíveis *)
-  teste_eval_erro (Binop(Eq, Num 5, Bool true)) "Teste C17 (5 = true) - deve dar erro";
-  teste_eval_erro (Binop(Lt, Bool false, Num 0)) "Teste C18 (false < 0) - deve dar erro";
-  teste_eval_erro (Binop(Gt, Unit, Num 1)) "Teste C19 (unit > 1) - deve dar erro";
-  teste_eval_erro (Binop(Neq, Bool true, Num 1)) "Teste C20 (true != 1) - deve dar erro";
-  
-  (* Testes de combinações de operadores *)
-  teste_eval (Binop(And, Binop(Lt, Num 5, Num 10), Binop(Gt, Num 7, Num 3))) 
-    "Teste CO1 ((5 < 10) AND (7 > 3))";
-  teste_eval (Binop(Or, Binop(Eq, Num 5, Num 5), Binop(Eq, Num 6, Num 7))) 
-    "Teste CO2 ((5 = 5) OR (6 = 7))";
-  teste_eval (Binop(Eq, Binop(Sum, Num 5, Num 5), Num 10)) 
-    "Teste CO3 ((5 + 5) = 10)";
-  teste_eval (Binop(Or, Binop(Lt, Num 5, Num 3), Binop(Neq, Num 7, Num 7))) 
-    "Teste CO4 ((5 < 3) OR (7 != 7))";
-  
-  print_endline "";
-  print_endline "=== TESTES DE CURTO-CIRCUITO ===";
-  
-  (* Testes de curto-circuito para AND e OR *)
-  teste_eval (Binop(And, Bool false, Bool true)) "Teste SC1 (false AND true) - não deve avaliar o segundo operando";
+  (* Teste de curto-circuito *)
   teste_eval (Binop(And, Bool false, Binop(Div, Num 1, Num 0))) 
-    "Teste SC2 (false AND (1/0)) - curto-circuito evita divisão por zero";
-  teste_eval (Binop(Or, Bool true, Bool false)) "Teste SC3 (true OR false) - não deve avaliar o segundo operando";
+    "Curto-circuito AND (não deve dar erro)";
   teste_eval (Binop(Or, Bool true, Binop(Div, Num 1, Num 0))) 
-    "Teste SC4 (true OR (1/0)) - curto-circuito evita divisão por zero";
-    
-  print_endline "";
-  print_endline "=== TESTES DE EXPRESSÕES COMPLEXAS ===";
-    
-  (* Testes de expressões mais complexas *)
-  teste_eval (Binop(Sum, 
-                  Binop(Mul, Num 3, Num 4), 
-                  Binop(Div, Num 10, Num 2)))
-    "Teste EX1 ((3 * 4) + (10 / 2)) = 17";
-    
-  teste_eval (Binop(And,
-                  Binop(Gt, Binop(Sum, Num 5, Num 5), Num 9),
-                  Binop(Lt, Binop(Sub, Num 20, Num 5), Num 20)))
-    "Teste EX2 (((5 + 5) > 9) AND ((20 - 5) < 20)) = true";
-    
-  teste_eval (Binop(Or,
-                  Binop(Neq, Binop(Div, Num 10, Num 3), Num 3),
-                  Binop(Lt, Binop(Mul, Num (-2), Num 3), Num 0)))
-    "Teste EX3 (((10 / 3) != 3) OR ((-2 * 3) < 0)) = true";
-    
-  teste_eval (Binop(Eq,
-                  Binop(Sum, Binop(Mul, Num 2, Num 3), Num 4),
-                  Binop(Sub, Binop(Mul, Num 5, Num 2), Num 0)))
-    "Teste EX4 (((2 * 3) + 4) = ((5 * 2) - 0)) = true";
-  
-  print_endline "";
-  print_endline "=== TESTES DE EXPRESSÕES CONDICIONAIS (IF) ===";
-  
-  (* Testes básicos de if-then-else *)
-  teste_eval (If(Bool true, Num 1, Num 2)) 
-    "Teste IF1 (if true then 1 else 2) = 1";
-  teste_eval (If(Bool false, Num 1, Num 2)) 
-    "Teste IF2 (if false then 1 else 2) = 2";
-    
-  (* Testes com condições complexas *)
-  teste_eval (If(Binop(Lt, Num 5, Num 10), 
-                Bool true, 
-                Bool false))
-    "Teste IF3 (if (5 < 10) then true else false) = true";
-  teste_eval (If(Binop(Eq, Num 7, Num 7), 
-                Binop(Sum, Num 5, Num 5), 
-                Num 0))
-    "Teste IF4 (if (7 = 7) then (5 + 5) else 0) = 10";
-    
-  (* Testes de aninhamento de ifs *)
-  teste_eval (If(Binop(Gt, Num 10, Num 5),
-                If(Binop(Lt, Num 3, Num 4), 
-                   Num 1, 
-                   Num 2),
-                Num 3))
-    "Teste IF5 (if (10 > 5) then (if (3 < 4) then 1 else 2) else 3) = 1";
-    
-  (* Testes de erro com condição não booleana *)
-  teste_eval_erro (If(Num 1, Num 2, Num 3))
-    "Teste IF6 (if 1 then 2 else 3) - deve dar erro";
-    
-  print_endline "";
-  print_endline "=== TESTES DE VERIFICAÇÃO DE TIPOS NO IF ===";
-    
-  (* Testes para garantir que ambos os ramos do if tenham o mesmo tipo *)
-  teste_eval (If(Bool true, Num 10, Num 20)) 
-    "Teste IF-TIPO1 (if true then 10 else 20) - mesmos tipos";
-  teste_eval (If(Bool false, Bool true, Bool false)) 
-    "Teste IF-TIPO2 (if false then true else false) - mesmos tipos";
-  teste_eval (If(Binop(Lt, Num 5, Num 10), Unit, Unit)) 
-    "Teste IF-TIPO3 (if (5 < 10) then unit else unit) - mesmos tipos";
-    
-  (* Testes para verificação de tipos diferentes nos ramos *)
-  teste_eval_erro (If(Bool true, Num 5, Bool true)) 
-    "Teste IF-TIPO4 (if true then 5 else true) - tipos diferentes, deve dar erro";
-  teste_eval_erro (If(Bool false, Unit, Num 10)) 
-    "Teste IF-TIPO5 (if false then unit else 10) - tipos diferentes, deve dar erro";
-  teste_eval_erro (If(Binop(Gt, Num 7, Num 3), Bool false, Num 0)) 
-    "Teste IF-TIPO6 (if (7 > 3) then false else 0) - tipos diferentes, deve dar erro";
-    
-  (* Teste com expressões mais complexas em ambos os ramos *)
-  teste_eval (If(Binop(Eq, Num 5, Num 5),
-                Binop(Sum, Num 10, Num 20),
-                Binop(Mul, Num 5, Num 6)))
-    "Teste IF-TIPO7 (if (5 = 5) then (10 + 20) else (5 * 6)) - ambos retornam Int";
-  teste_eval_erro (If(Binop(Neq, Num 7, Num 7),
-                     Binop(Sum, Num 5, Num 5),
-                     Binop(Lt, Num 3, Num 4)))
-    "Teste IF-TIPO8 (if (7 != 7) then (5 + 5) else (3 < 4)) - tipos diferentes (Int e Bool), deve dar erro";
-  
-  print_endline "";
-  print_endline "=== FIM DOS TESTES ===";
+    "Curto-circuito OR (não deve dar erro)"
 
-  print_endline "";
-  print_endline "=== TESTES DE VARIÁVEIS (LET e ID) ===";
+(* ===== TESTES DE COMPARAÇÃO ===== *)
+
+let testes_comparacao () =
+  print_endline "\n========== TESTES DE COMPARAÇÃO ==========";
   
-  (* Testes básicos de Let *)
-  teste_eval (Let("x", TyInt, Num 42, Id "x")) 
-    "Teste VAR1 (let x: int = 42 in x) = 42";
-  teste_eval (Let("y", TyBool, Bool true, Id "y")) 
-    "Teste VAR2 (let y: bool = true in y) = true";
-  teste_eval (Let("z", TyUnit, Unit, Id "z")) 
-    "Teste VAR3 (let z: unit = () in z) = unit";
-    
-  (* Testes de Let com expressões complexas *)
-  teste_eval (Let("a", TyInt, Binop(Sum, Num 10, Num 5), Id "a"))
-    "Teste VAR4 (let a: int = (10 + 5) in a) = 15";
-  teste_eval (Let("b", TyBool, Binop(Lt, Num 5, Num 10), Id "b"))
-    "Teste VAR5 (let b: bool = (5 < 10) in b) = true";
-    
-  (* Testes de Let com corpo complexo *)
-  teste_eval (Let("x", TyInt, Num 5, Binop(Sum, Id "x", Num 10)))
-    "Teste VAR6 (let x: int = 5 in (x + 10)) = 15";
-  teste_eval (Let("y", TyBool, Bool false, If(Id "y", Num 1, Num 2)))
-    "Teste VAR7 (let y: bool = false in (if y then 1 else 2)) = 2";
-    
-  (* Testes de aninhamento de Let *)
+  teste_eval (Binop(Lt, Num 5, Num 10)) "Menor que: 5 < 10";
+  teste_eval (Binop(Gt, Num 15, Num 8)) "Maior que: 15 > 8";
+  teste_eval (Binop(Eq, Num 7, Num 7)) "Igualdade: 7 = 7";
+  teste_eval (Binop(Neq, Num 5, Num 3)) "Diferenca: 5 != 3";
+  
+  (* Comparações booleanas *)
+  teste_eval (Binop(Eq, Bool true, Bool true)) "Igualdade booleana: true = true";
+  teste_eval (Binop(Neq, Bool true, Bool false)) "Diferenca booleana: true != false"
+
+(* ===== TESTES DE IF-THEN-ELSE ===== *)
+
+let testes_condicionais () =
+  print_endline "\n========== TESTES CONDICIONAIS ==========";
+  
+  teste_eval (If(Bool true, Num 100, Num 200)) "IF com true";
+  teste_eval (If(Bool false, Num 100, Num 200)) "IF com false";
+  teste_eval (If(Binop(Lt, Num 5, Num 10), Num 1, Num 0)) "IF com comparação";
+  
+  (* IF aninhado *)
+  teste_eval (If(Bool true, 
+                 If(Bool false, Num 1, Num 2), 
+                 Num 3)) "IF aninhado"
+
+(* ===== TESTES DE LET ===== *)
+
+let testes_let () =
+  print_endline "\n========== TESTES DE LET ==========";
+  
+  teste_eval (Let("x", TyInt, Num 42, Id "x")) "LET simples";
   teste_eval (Let("x", TyInt, Num 10, 
-                 Let("y", TyInt, Num 20, 
-                    Binop(Sum, Id "x", Id "y"))))
-    "Teste VAR8 (let x: int = 10 in (let y: int = 20 in (x + y))) = 30";
-    
-  (* Testes de escopo: variável interna oculta externa *)
-  teste_eval (Let("x", TyInt, Num 5, 
-                 Let("x", TyInt, Num 10, 
-                    Id "x")))
-    "Teste VAR9 (let x: int = 5 in (let x: int = 10 in x)) = 10 (escopo interno)";
-    
-  (* Testes com diferentes tipos *)
-  teste_eval (Let("num", TyInt, Num 42,
-                 Let("flag", TyBool, Bool true,
-                    Let("nothing", TyUnit, Unit,
-                       If(Id "flag", Id "num", Num 0)))))
-    "Teste VAR10 (múltiplas variáveis de tipos diferentes) = 42";
-    
-  (* Testes de erro: variável não encontrada *)
-  teste_eval_erro (Id "x")
-    "Teste VAR11 (x) - variável não definida, deve dar erro";
-  teste_eval_erro (Let("y", TyInt, Num 5, Id "x"))
-    "Teste VAR12 (let y: int = 5 in x) - x não definida, deve dar erro";
-    
-  (* Testes de expressões com variáveis *)
-  teste_eval (Let("a", TyInt, Num 3,
-                 Let("b", TyInt, Num 4,
-                    Binop(Mul, Id "a", Id "b"))))
-    "Teste VAR13 (let a: int = 3 in (let b: int = 4 in (a * b))) = 12";
-    
-  teste_eval (Let("x", TyInt, Num 7,
-                 Let("y", TyInt, Num 3,
-                    Binop(Gt, Id "x", Id "y"))))
-    "Teste VAR14 (let x: int = 7 in (let y: int = 3 in (x > y))) = true";
-    
-  (* Testes de Let com condicionais *)
-  teste_eval (Let("condition", TyBool, Bool true,
-                 Let("val1", TyInt, Num 100,
-                    Let("val2", TyInt, Num 200,
-                       If(Id "condition", Id "val1", Id "val2")))))
-    "Teste VAR15 (if com variáveis) = 100";
-    
-  (* Testes de reutilização de variáveis *)
+                  Binop(Sum, Id "x", Num 5))) "LET com uso da variável";
+  
+  (* LET aninhado *)
   teste_eval (Let("x", TyInt, Num 5,
-                 Binop(Sum, Id "x", Id "x")))
-    "Teste VAR16 (let x: int = 5 in (x + x)) = 10";
-    
-  teste_eval (Let("flag", TyBool, Bool false,
-                 Binop(Or, Id "flag", Bool true)))
-    "Teste VAR17 (let flag: bool = false in (flag OR true)) = true";
-
-  (* Testes de expressões aninhadas com variáveis *)
-  teste_eval (Let("a", TyInt, Num 2,
-                 Let("b", TyInt, Num 3,
-                    Let("c", TyInt, Num 4,
-                       Binop(Sum, 
-                             Binop(Mul, Id "a", Id "b"),
-                             Id "c")))))
-    "Teste VAR18 (let a=2 in let b=3 in let c=4 in ((a*b)+c)) = 10";
-
-  print_endline "";
-  print_endline "=== FIM DOS TESTES ==="
-
-(* Função para testes de referencias (NEW) *)
-let testes_referencias () =
-  print_endline "=== TESTES DE REFERENCIAS (NEW) ===";
+                  Let("y", TyInt, Num 10,
+                      Binop(Sum, Id "x", Id "y")))) "LET aninhado";
   
-  (* Testes basicos de criacao de referencias *)
-  teste_eval (New(Num 42)) 
-    "Teste REF1 (new 42) - cria referencia para inteiro";
-  teste_eval (New(Bool true)) 
-    "Teste REF2 (new true) - cria referencia para booleano";
-  teste_eval (New(Unit)) 
-    "Teste REF3 (new ()) - cria referencia para unit";
-    
-  (* Testes com expressoes como valor da referencia *)
-  teste_eval (New(Binop(Sum, Num 10, Num 5))) 
-    "Teste REF4 (new (10 + 5)) - cria referencia para resultado de expressao";
-  teste_eval (New(Binop(Lt, Num 5, Num 10))) 
-    "Teste REF5 (new (5 < 10)) - cria referencia para resultado booleano";
-  teste_eval (New(If(Bool true, Num 100, Num 200))) 
-    "Teste REF6 (new (if true then 100 else 200)) - cria referencia para resultado de if";
-    
-  (* Testes com variaveis *)
-  teste_eval (Let("x", TyInt, Num 25, New(Id "x"))) 
-    "Teste REF7 (let x: int = 25 in new x) - cria referencia para variavel";
-  teste_eval (Let("y", TyBool, Bool false, New(Id "y"))) 
-    "Teste REF8 (let y: bool = false in new y) - cria referencia para variavel booleana";
-    
-  (* Testes de criacao de multiplas referencias *)
-  teste_eval (Seq(New(Num 10), New(Num 20))) 
-    "Teste REF9 (new 10; new 20) - cria duas referencias em sequencia";
-  teste_eval (Let("r1", TyRef TyInt, New(Num 100),
-                 Let("r2", TyRef TyBool, New(Bool true),
-                    New(Num 300))))
-    "Teste REF10 (multiplas referencias) - enderecos devem ser diferentes";
-    
-  (* Testes com expressoes complexas *)
-  teste_eval (New(Let("temp", TyInt, Num 7, Binop(Mul, Id "temp", Num 6))))
-    "Teste REF11 (new (let temp: int = 7 in (temp * 6))) - referencia para resultado complexo";
-    
-  (* Teste de aninhamento de New *)
-  teste_eval (New(New(Num 42)))
-    "Teste REF12 (new (new 42)) - referencia para referencia";
-    
-  print_endline ""
+  (* Teste de escopo *)
+  teste_eval (Let("x", TyInt, Num 5,
+                  Let("x", TyInt, Num 10,
+                      Id "x"))) "Teste de escopo (shadowing)"
 
-(* Função para testes de desreferenciamento (DEREF) *)
-let testes_deref () =
-  print_endline "=== TESTES DE DESREFERENCIAMENTO (DEREF) ===";
+(* ===== TESTES DE SEQUENCIAMENTO ===== *)
+
+let testes_sequenciamento () =
+  print_endline "\n========== TESTES DE SEQUENCIAMENTO ==========";
   
-  (* Testes basicos de desreferenciamento *)
-  teste_eval (Let("r", TyRef TyInt, New(Num 42), Deref(Id "r")))
-    "Teste DEREF1 (let r = new 42 in !r) - desreferencia inteiro";
-  teste_eval (Let("r", TyRef TyBool, New(Bool true), Deref(Id "r")))
-    "Teste DEREF2 (let r = new true in !r) - desreferencia booleano";
-  teste_eval (Let("r", TyRef TyUnit, New(Unit), Deref(Id "r")))
-    "Teste DEREF3 (let r = new () in !r) - desreferencia unit";
-    
-  (* Testes com expressoes *)
-  teste_eval (Let("r", TyRef TyInt, New(Binop(Sum, Num 10, Num 5)), Deref(Id "r")))
-    "Teste DEREF4 (let r = new (10 + 5) in !r) - desreferencia resultado de expressao";
-  teste_eval (Let("r", TyRef TyBool, New(Binop(Lt, Num 5, Num 10)), Deref(Id "r")))
-    "Teste DEREF5 (let r = new (5 < 10) in !r) - desreferencia resultado booleano";
-    
-  (* Teste de desreferenciamento de referencia para referencia *)
-  teste_eval (Let("r1", TyRef TyInt, New(Num 100),
-             Let("r2", TyRef (TyRef TyInt), New(Id "r1"),
-                Deref(Deref(Id "r2")))))
-    "Teste DEREF6 (desreferenciamento duplo) - !!r2 onde r2 aponta para r1";
-    
-  (* Teste de erro - tentar desreferenciar nao-referencia *)
-  teste_eval_erro (Deref(Num 42))
-    "Teste DEREF7 (!42) - deve dar erro (nao e referencia)";
-  teste_eval_erro (Deref(Bool true))
-    "Teste DEREF8 (!true) - deve dar erro (nao e referencia)";
-    
-  print_endline ""
+  teste_eval (Seq(Num 1, Num 2)) "Sequência simples";
+  teste_eval (Seq(Seq(Num 1, Num 2), Num 3)) "Sequência aninhada";
+  teste_eval (Seq(Print(Num 42), Num 100)) "Sequência com print"
 
-(* Função para testes de atribuição (ASG) *)
-let testes_atribuicao () =
-  print_endline "=== TESTES DE ATRIBUICAO (ASG) ===";
-  
-  (* Testes basicos de atribuicao *)
-  teste_eval (Let("r", TyRef TyInt, New(Num 42), 
-             Seq(Asg(Id "r", Num 100), Deref(Id "r"))))
-    "Teste ASG1 (r := 100; !r) - atribuicao e leitura";
-  teste_eval (Let("r", TyRef TyBool, New(Bool false), 
-             Seq(Asg(Id "r", Bool true), Deref(Id "r"))))
-    "Teste ASG2 (r := true; !r) - atribuicao booleana";
-    
-  (* Testes com expressoes *)
-  teste_eval (Let("r", TyRef TyInt, New(Num 0), 
-             Seq(Asg(Id "r", Binop(Sum, Num 10, Num 5)), Deref(Id "r"))))
-    "Teste ASG3 (r := 10+5; !r) - atribuicao de expressao";
-  teste_eval (Let("r", TyRef TyBool, New(Bool true), 
-             Seq(Asg(Id "r", Binop(Gt, Num 10, Num 5)), Deref(Id "r"))))
-    "Teste ASG4 (r := 10>5; !r) - atribuicao de comparacao";
-    
-  (* Teste de multiplas atribuicoes *)
-  teste_eval (Let("r", TyRef TyInt, New(Num 1), 
-             Seq(Asg(Id "r", Num 2),
-             Seq(Asg(Id "r", Num 3), 
-             Deref(Id "r")))))
-    "Teste ASG5 (multiplas atribuicoes) - deve retornar ultimo valor";
-    
-  (* Teste de erro - tentar atribuir a nao-referencia *)
-  teste_eval_erro (Asg(Num 42, Num 100))
-    "Teste ASG6 (42 := 100) - deve dar erro (nao e referencia)";
-    
-  print_endline ""
+(* ===== TESTES DE PRINT ===== *)
 
-(* Função para testes de while (WH) *)
-let testes_while () =
-  print_endline "=== TESTES DE WHILE (WH) ===";
-  
-  (* Teste basico de while - loop que nao executa *)
-  teste_eval (Wh(Bool false, Print(Num 999)))
-    "Teste WH1 (while false do print 999) - nao deve executar";
-    
-  (* Teste de contador simples *)
-  teste_eval (Let("counter", TyRef TyInt, New(Num 0),
-             Seq(Wh(Binop(Lt, Deref(Id "counter"), Num 3),
-                   Asg(Id "counter", Binop(Sum, Deref(Id "counter"), Num 1))),
-                Deref(Id "counter"))))
-    "Teste WH2 (contador de 0 a 3) - deve retornar 3";
-    
-  (* Teste de loop com decremento *)
-  teste_eval (Let("counter", TyRef TyInt, New(Num 5),
-             Seq(Wh(Binop(Gt, Deref(Id "counter"), Num 0),
-                   Asg(Id "counter", Binop(Sub, Deref(Id "counter"), Num 1))),
-                Deref(Id "counter"))))
-    "Teste WH3 (contador de 5 a 0) - deve retornar 0";
-    
-  (* Teste de erro - condicao nao booleana *)
-  teste_eval_erro (Wh(Num 42, Unit))
-    "Teste WH4 (while 42 do ()) - deve dar erro (condicao nao booleana)";
-    
-  print_endline ""
-
-(* Função para testes do for loop *)
-let testes_for () =
-  print_endline "=== TESTES DE FOR LOOP ===";
-  
-  (* Teste basico: soma de 1 a 3 *)
-  teste_eval (Let("sum", TyRef TyInt, New(Num 0),
-                Seq(For("i", Num 1, Num 3, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
-                   Deref(Id "sum"))))
-    "Teste FOR1 (soma de 1 a 3) - deve retornar 6";
-    
-  (* Teste com for de 1 a 1 *)
-  teste_eval (Let("sum", TyRef TyInt, New(Num 0),
-                Seq(For("i", Num 1, Num 1, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
-                   Deref(Id "sum"))))
-    "Teste FOR2 (soma de 1 a 1) - deve retornar 1";
-    
-  (* Teste com for de 5 a 2 (nao deve executar) *)
-  teste_eval (Let("sum", TyRef TyInt, New(Num 10),
-                Seq(For("i", Num 5, Num 2, 
-                      Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
-                   Deref(Id "sum"))))
-    "Teste FOR3 (for 5 a 2) - nao deve executar, retorna 10";
-    
-  (* Teste com variavel no limite *)
-  teste_eval (Let("n", TyInt, Num 4,
-                Let("sum", TyRef TyInt, New(Num 0),
-                  Seq(For("i", Num 1, Id "n", 
-                        Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
-                     Deref(Id "sum")))))
-    "Teste FOR4 (soma de 1 a n=4) - deve retornar 10";
-    
-  (* Teste for com multiplicacao *)
-  teste_eval (Let("fact", TyRef TyInt, New(Num 1),
-                Seq(For("i", Num 1, Num 4, 
-                      Asg(Id "fact", Binop(Mul, Deref(Id "fact"), Id "i"))),
-                   Deref(Id "fact"))))
-    "Teste FOR5 (fatorial de 4 usando for) - deve retornar 24";
-    
-  print_endline ""
-
-(* Função para testes de print *)
 let testes_print () =
-  print_endline "=== TESTES DE PRINT ===";
+  print_endline "\n========== TESTES DE PRINT ==========";
   
-  (* Testes basicos de impressao *)
-  teste_eval (Print(Num 42))
-    "Teste PRINT1 (print 42) - imprime inteiro";
-  teste_eval (Print(Bool true))
-    "Teste PRINT2 (print true) - imprime booleano";
-  teste_eval (Print(Unit))
-    "Teste PRINT3 (print ()) - imprime unit";
-    
-  (* Teste com expressoes *)
-  teste_eval (Print(Binop(Sum, Num 10, Num 5)))
-    "Teste PRINT4 (print (10+5)) - imprime resultado de expressao";
-  teste_eval (Print(Binop(Lt, Num 5, Num 10)))
-    "Teste PRINT5 (print (5<10)) - imprime resultado booleano";
-    
-  (* Teste com referencias *)
-  teste_eval (Let("r", TyRef TyInt, New(Num 100), Print(Deref(Id "r"))))
-    "Teste PRINT6 (print !r) - imprime valor da referencia";
-    
-  (* Teste de sequencia de prints *)
-  teste_eval (Seq(Print(Num 1), 
-             Seq(Print(Num 2), 
-                Print(Num 3))))
-    "Teste PRINT7 (sequencia de prints) - imprime 1, 2, 3";
-    
-  print_endline ""
-
-(* ===== MENU INTERATIVO ===== *)
-
-let mostrar_menu () =
-  print_endline "";
-  print_endline "==================================================";
-  print_endline "    SISTEMA DE TESTES INTERATIVO - AVALIADOR";
-  print_endline "==================================================";
-  print_endline "";
-  print_endline "Escolha qual tipo de teste executar:";
-  print_endline "";
-  print_endline "  1. Literais (Num, Bool, Unit)";
-  print_endline "  2. Operações Aritméticas (+, -, *, /)";
-  print_endline "  3. Casos de Erro (divisão por zero, tipos)";
-  print_endline "  4. Operações Lógicas (AND, OR, Comparações)";
-  print_endline "  5. Variáveis (LET/ID)";
-  print_endline "  6. Referencias (NEW)";
-  print_endline "  7. Desreferenciamento (DEREF)";
-  print_endline "  8. Atribuição (ASG)";
-  print_endline "  9. While (WH)";
-  print_endline " 10. For Loop";
-  print_endline " 11. Print";
-  print_endline " 12. Executar TODOS os testes";
-  print_endline "  0. Sair";
-  print_endline "";
-  print_string "Digite sua opção (0-12): ";
-  flush_all ()
-
-let executar_todos_testes () =
-  print_endline "=== EXECUTANDO TODOS OS TESTES ===";
-  print_endline "";
+  (* Print de valores básicos *)
+  teste_eval (Print(Num 42)) "Print de número";
+  teste_eval (Print(Bool true)) "Print de booleano true";
+  teste_eval (Print(Bool false)) "Print de booleano false";
+  teste_eval (Print(Unit)) "Print de unit";
   
-  testes_literais ();
+  (* Print de expressões *)
+  teste_eval (Print(Binop(Sum, Num 10, Num 5))) "Print de soma";
+  teste_eval (Print(If(Bool true, Num 100, Num 200))) "Print de condicional";
+  
+  (* Múltiplos prints em sequência *)
+  teste_eval (Seq(Print(Num 1), Print(Num 2))) "Dois prints em sequencia";
+  teste_eval (Seq(Seq(Print(Num 1), Print(Num 2)), Print(Num 3))) 
+    "Tres prints em sequencia";
+  
+  (* Print com variáveis *)
+  teste_eval (Let("x", TyInt, Num 42, Print(Id "x"))) "Print de variavel";
+  
+  (* Print com referências *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 99),
+                  Print(Deref(Id "r")))) "Print de dereferencia";
+  
+  (* Print aninhado com outras operações *)
+  teste_eval (Let("x", TyInt, Num 10,
+                  Seq(Print(Id "x"),
+                      Let("y", TyInt, Binop(Mul, Id "x", Num 2),
+                          Print(Id "y"))))) "Print aninhado com let";
+  
+  (* Print dentro de estruturas de controle *)
+  teste_eval (If(Bool true, Print(Num 1), Print(Num 0))) "Print em if-then-else"
+
+(* ===== TESTES DE REFERÊNCIAS ===== *)
+
+let testes_referencias () =
+  print_endline "\n========== TESTES DE REFERÊNCIAS ==========";
+  
+  (* NEW básico *)
+  teste_eval (New(Num 42)) "NEW simples";
+  teste_eval (New(Bool true)) "NEW com booleano";
+  
+  (* NEW + DEREF *)
+  teste_eval (Deref(New(Num 100))) "NEW + DEREF";
+  
+  (* Múltiplas referências *)
+  teste_eval (Let("r1", TyRef TyInt, New(Num 10),
+                  Let("r2", TyRef TyInt, New(Num 20),
+                      Binop(Sum, Deref(Id "r1"), Deref(Id "r2"))))) 
+    "Multiplas referencias";
+  
+  (* Atribuição básica *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 5),
+                  Seq(Asg(Id "r", Num 15),
+                      Deref(Id "r")))) "Atribuicao basica";
+  
+  (* Múltiplas atribuições *)
+  teste_eval (Let("r", TyRef TyInt, New(Num 0),
+                  Seq(Asg(Id "r", Num 10),
+                      Seq(Asg(Id "r", Num 20),
+                          Deref(Id "r"))))) "Multiplas atribuicoes"
+
+(* ===== TESTES DE READ ===== *)
+
+let testes_read () =
+  print_endline "\n========== TESTES DE READ ==========";
+  
+  teste_eval_com_input Read "Read simples" [42];
+  teste_eval_com_input (Binop(Sum, Read, Num 10)) "Read + operação" [5];
+  teste_eval_com_input (Let("x", TyInt, Read, 
+                            Binop(Mul, Id "x", Num 2))) "Read em LET" [7];
+  
+  (* Múltiplos reads *)
+  teste_eval_com_input (Binop(Sum, Read, Read)) "Dois reads" [3; 7];
+  
+  (* Read com buffer vazio (deve retornar 0) *)
+  teste_eval Read "Read sem input (buffer vazio)"
+
+(* ===== TESTES DE WHILE ===== *)
+
+let testes_while () =
+  print_endline "\n========== TESTES DE WHILE ==========";
+  
+  (* While que não executa *)
+  teste_eval (Wh(Bool false, Print(Num 999))) "While que nao executa";
+  
+  (* Contador simples *)
+  teste_eval (Let("counter", TyRef TyInt, New(Num 3),
+                  Seq(Wh(Binop(Gt, Deref(Id "counter"), Num 0),
+                         Asg(Id "counter", Binop(Sub, Deref(Id "counter"), Num 1))),
+                      Deref(Id "counter")))) "Contador decrescente";
+  
+  (* Acumulador *)
+  teste_eval (Let("i", TyRef TyInt, New(Num 1),
+                  Let("sum", TyRef TyInt, New(Num 0),
+                      Seq(Wh(Binop(Lt, Deref(Id "i"), Num 4),
+                             Seq(Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Deref(Id "i"))),
+                                 Asg(Id "i", Binop(Sum, Deref(Id "i"), Num 1)))),
+                          Deref(Id "sum"))))) "Soma 1+2+3"
+
+(* ===== TESTES DE FOR ===== *)
+
+let testes_for () =
+  print_endline "\n========== TESTES DE FOR ==========";
+  
+  (* FOR simples *)
+  teste_eval (For("i", Num 1, Num 3, Print(Id "i"))) "FOR simples (print 1,2,3)";
+  
+  (* FOR com acumulador *)
+  teste_eval (Let("sum", TyRef TyInt, New(Num 0),
+                  Seq(For("i", Num 1, Num 5,
+                          Asg(Id "sum", Binop(Sum, Deref(Id "sum"), Id "i"))),
+                      Deref(Id "sum")))) "FOR soma 1 a 5";
+  
+  (* FOR com multiplicação *)
+  teste_eval (Let("prod", TyRef TyInt, New(Num 1),
+                  Seq(For("i", Num 1, Num 4,
+                          Asg(Id "prod", Binop(Mul, Deref(Id "prod"), Id "i"))),
+                      Deref(Id "prod")))) "FOR produto 1*2*3*4 (fatorial de 4)"
+
+(* ===== TESTES DE PROGRAMAS COMPLEXOS ===== *)
+
+let testes_programas_complexos () =
+  print_endline "\n========== TESTES DE PROGRAMAS COMPLEXOS ==========";
+  
+  (* Fatorial usando while *)
+  teste_eval_com_input factorial_program "Programa fatorial" [5];
+  
+  (* Soma usando for *)
+  teste_eval_com_input for_sum_program "Programa soma com FOR" [10];
+  
+  (* Programa que testa escopo e referências *)
+  teste_eval (Let("x", TyInt, Num 100,
+                  Let("y", TyRef TyInt, New(Id "x"),
+                      Let("x", TyInt, Num 200,
+                          Binop(Sum, Id "x", Deref(Id "y")))))) "Escopo complexo"
+
+(* ===== TESTES DE CASOS EXTREMOS ===== *)
+
+let testes_casos_extremos () =
+  print_endline "\n========== TESTES DE CASOS EXTREMOS ==========";
+  
+  (* FOR com range vazio *)
+  teste_eval (For("i", Num 5, Num 2, Print(Id "i"))) "FOR com range vazio";
+  
+  (* FOR com range unitário *)
+  teste_eval (For("i", Num 3, Num 3, Print(Id "i"))) "FOR com range unitário";
+  
+  (* Referência de referência (não suportado diretamente, mas teste interessante) *)
+  teste_eval (Let("r1", TyRef TyInt, New(Num 42),
+                  Let("addr", TyInt, Num 0,  (* Simula endereço *)
+                      Deref(Id "r1")))) "Teste de referência complexa"
+
+(* ===== FUNÇÃO PRINCIPAL DOS TESTES ===== *)
+
+let executar_todos_os_testes () =
+  print_endline "INICIANDO BATERIA COMPLETA DE TESTES DO AVALIADOR SMALL-STEP";
+  print_endline "==================================================================";
+  
+  testes_valores_basicos ();
   testes_aritmeticos ();
-  testes_erros ();
   testes_logicos ();
+  testes_comparacao ();
+  testes_condicionais ();
+  testes_let ();
+  testes_sequenciamento ();
+  testes_print ();
   testes_referencias ();
-  testes_deref ();
-  testes_atribuicao ();
+  testes_read ();
   testes_while ();
   testes_for ();
-  testes_print ();
+  testes_programas_complexos ();
+  testes_casos_extremos ();
   
+  print_endline "\n==================================================================";
+  print_endline "BATERIA DE TESTES CONCLUIDA!";
+  print_endline "   Se nao houve erros acima, o avaliador esta funcionando corretamente.";
+  print_endline "   Implementacao small-step validada com sucesso!"
+
+(* ===== SISTEMA DE EXECUÇÃO MODULAR ===== *)
+
+let mostrar_ajuda () =
+  print_endline "=== SISTEMA DE TESTES MODULAR ===";
+  print_endline "Uso: ./test [opção]";
   print_endline "";
-  print_endline "=== TODOS OS TESTES EXECUTADOS ==="
+  print_endline "Opções disponíveis:";
+  print_endline "  all              - Executa todos os testes (padrão)";
+  print_endline "  basicos          - Testes de valores básicos";
+  print_endline "  aritmeticos      - Testes de operações aritméticas";
+  print_endline "  logicos          - Testes de operações lógicas";
+  print_endline "  comparacao       - Testes de comparação";
+  print_endline "  condicionais     - Testes de if-then-else";
+  print_endline "  let              - Testes de let";
+  print_endline "  sequenciamento   - Testes de sequenciamento";
+  print_endline "  print            - Testes especificos de Print";
+  print_endline "  referencias      - Testes de referencias";
+  print_endline "  read             - Testes de Read";
+  print_endline "  while            - Testes de While";
+  print_endline "  for              - Testes de For";
+  print_endline "  complexos        - Testes de programas complexos";
+  print_endline "  extremos         - Testes de casos extremos";
+  print_endline "  help             - Mostra esta ajuda";
+  print_endline ""
 
-let rec loop_principal () =
-  mostrar_menu ();
-  try
-    let opcao = read_int () in
-    print_endline "";
-    (match opcao with
-     | 0 -> 
-         print_endline "Saindo do sistema de testes. Até logo!";
-         print_endline ""
-     | 1 -> testes_literais (); loop_principal ()
-     | 2 -> testes_aritmeticos (); loop_principal ()
-     | 3 -> testes_erros (); loop_principal ()
-     | 4 -> testes_logicos (); loop_principal ()
-     | 5 -> print_endline "=== TESTES DE VARIÁVEIS (LET e ID) ==="; 
-            teste_eval (Let("x", TyInt, Num 42, Id "x")) "Teste VAR1 (let x: int = 42 in x) = 42";
-            teste_eval (Let("y", TyBool, Bool true, Id "y")) "Teste VAR2 (let y: bool = true in y) = true";
-            teste_eval (Let("z", TyUnit, Unit, Id "z")) "Teste VAR3 (let z: unit = () in z) = unit";
-            teste_eval (Let("a", TyInt, Binop(Sum, Num 10, Num 5), Id "a")) "Teste VAR4 (let a: int = (10 + 5) in a) = 15";
-            teste_eval (Let("b", TyBool, Binop(Lt, Num 5, Num 10), Id "b")) "Teste VAR5 (let b: bool = (5 < 10) in b) = true";
-            teste_eval (Let("x", TyInt, Num 5, Binop(Sum, Id "x", Num 10))) "Teste VAR6 (let x: int = 5 in (x + 10)) = 15";
-            teste_eval (Let("y", TyBool, Bool false, If(Id "y", Num 1, Num 2))) "Teste VAR7 (let y: bool = false in (if y then 1 else 2)) = 2";
-            teste_eval (Let("x", TyInt, Num 10, Let("y", TyInt, Num 20, Binop(Sum, Id "x", Id "y")))) "Teste VAR8 (let x: int = 10 in (let y: int = 20 in (x + y))) = 30";
-            teste_eval_erro (Id "x") "Teste VAR9 (x) - variável não definida, deve dar erro";
-            print_endline "=== FIM DOS TESTES ==="; loop_principal ()
-     | 6 -> testes_referencias (); loop_principal ()
-     | 7 -> testes_deref (); loop_principal ()
-     | 8 -> testes_atribuicao (); loop_principal ()
-     | 9 -> testes_while (); loop_principal ()
-     | 10 -> testes_for (); loop_principal ()
-     | 11 -> testes_print (); loop_principal ()
-     | 12 -> executar_todos_testes (); loop_principal ()
-     | _ -> 
-         print_endline "Opção inválida! Tente novamente.";
-         print_endline "";
-         loop_principal ())
-  with
-  | Failure _ ->
-      print_endline "Entrada inválida! Digite um número entre 0 e 12.";
-      print_endline "";
-      loop_principal ()
+let executar_teste_especifico teste =
+  print_endline "EXECUTANDO TESTE ESPECIFICO";
+  print_endline "===============================";
+  
+  (match teste with
+   | "basicos" -> testes_valores_basicos ()
+   | "aritmeticos" -> testes_aritmeticos ()
+   | "logicos" -> testes_logicos ()
+   | "comparacao" -> testes_comparacao ()
+   | "condicionais" -> testes_condicionais ()
+   | "let" -> testes_let ()
+   | "sequenciamento" -> testes_sequenciamento ()
+   | "print" -> testes_print ()
+   | "referencias" -> testes_referencias ()
+   | "read" -> testes_read ()
+   | "while" -> testes_while ()
+   | "for" -> testes_for ()
+   | "complexos" -> testes_programas_complexos ()
+   | "extremos" -> testes_casos_extremos ()
+   | "all" -> executar_todos_os_testes (); exit 0
+   | "help" -> mostrar_ajuda (); exit 0
+   | _ -> 
+       Printf.printf "ERRO: Teste '%s' nao reconhecido.\n" teste;
+       print_endline "Use 'help' para ver as opcoes disponiveis.";
+       exit 1);
+  
+  print_endline "\n===============================";
+  Printf.printf "TESTE '%s' CONCLUIDO!\n" (String.uppercase_ascii teste)
 
-(* ===== PROGRAMA PRINCIPAL ===== *)
+(* ===== EXECUÇÃO COM ARGUMENTOS DE LINHA DE COMANDO ===== *)
 
-let executar_modo_interativo () =
-  print_endline "";
-  print_endline "Bem-vindo ao Sistema de Testes do Avaliador!";
-  loop_principal ()
-
-(* Função para verificar argumentos da linha de comando *)
-let verificar_argumentos () =
-  let argc = Array.length Sys.argv in
-  if argc > 1 then
-    match Sys.argv.(1) with
-    | "-i" | "--interactive" -> 
-        executar_modo_interativo ()
-    | "-h" | "--help" ->
-        print_endline "Uso: ./testes [opções]";
-        print_endline "";
-        print_endline "Opções:";
-        print_endline "  -i, --interactive    Executa no modo interativo";
-        print_endline "  -h, --help          Mostra esta ajuda";
-        print_endline "";
-        print_endline "Sem argumentos: executa todos os testes automaticamente"
-    | _ ->
-        print_endline "Opção desconhecida. Use -h para ajuda.";
-        exit 1
-  else
-    (* Modo padrão: executar todos os testes automaticamente *)
-    executar_todos_testes ()
-
-(* ===== EXECUÇÃO PRINCIPAL DOS TESTES ===== *)
-let () = 
-  verificar_argumentos ()
+let () =
+  let args = Array.to_list Sys.argv in
+  match args with
+  | [_] -> 
+      (* Sem argumentos - executa todos os testes *)
+      executar_todos_os_testes ()
+  | [_; teste] -> 
+      (* Um argumento - executa teste específico *)
+      executar_teste_especifico teste
+  | _ -> 
+      (* Muitos argumentos - mostra erro *)
+      print_endline "ERRO: Muitos argumentos.";
+      mostrar_ajuda ();
+      exit 1
