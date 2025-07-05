@@ -1,78 +1,67 @@
 # Scripts de Compilação
 
-Esta pasta contém todos os scripts relacionados à compilação do projeto de Semântica Formal.
+Esta pasta contém os scripts de compilação para o projeto de Semântica Formal - Avaliador Small-Step da Linguagem L2.
 
-## Arquivos Principais
+## Arquivos Disponíveis
 
-- `Makefile`: Script Make principal para compilação
-- `compile.bat`: Script unificado para Windows (CMD/PowerShell)
-- `compile.sh`: Script unificado para sistemas Unix-like
+- **`Makefile`**: Script Make para compilação em sistemas Unix/Linux/Mac
+- **`build.ps1`**: Script PowerShell para compilação no Windows
 
-## Scripts Auxiliares
+## Como Compilar
 
-- `build.bat`: Script auxiliar para Windows CMD
-- `build.ps1`: Script auxiliar para PowerShell
-- `build.sh`: Script auxiliar para Unix
-- `cygwin_build.sh`: Script específico para Cygwin
-
-## Como Funciona
-
-O processo de compilação segue estas etapas:
-
-1. Limpeza de arquivos compilados anteriores
-2. Compilação de `Datatypes.ml`
-3. Compilação de `Eval.ml`
-4. Compilação de `Test.ml`
-5. Compilação de `Test_Interactive.ml`
-6. Criação do executável `avaliador` (e `avaliador.exe` no Windows)
-7. Criação do executável `testes` (e `test.exe` no Windows)
-8. Criação do executável `testes_interativo` (e `testes_interativo.exe` no Windows)
-
-No Windows, os executáveis são criados tanto com quanto sem extensão `.exe` 
-para máxima compatibilidade entre diferentes terminais.
-
-## Uso
-
-Os scripts nesta pasta devem ser chamados diretamente pelos usuários.
-Para usar o Make, é necessário estar dentro desta pasta:
-
-```bash
-# Entre na pasta build antes de usar o make
+### Windows (PowerShell)
+```powershell
 cd build
-make
-
-# Ou use os scripts de compilação diretamente da raiz:
-.\build\compile.bat  # Windows
-./build/compile.sh   # Unix/Linux
+.\build.ps1
 ```
 
-## Detecção de Ambiente
+### Linux/Mac
+```bash
+cd build
+make all
+```
 
-Os scripts detectam automaticamente o ambiente de execução:
-- Windows CMD
-- Windows PowerShell
-- Unix-like (Linux, macOS, WSL, Cygwin)
+## Executáveis Gerados
 
-E adaptam os comandos de compilação conforme necessário.
+Após a compilação bem-sucedida, os seguintes executáveis são criados na **raiz do projeto**:
 
-## Nota sobre Geração dos Scripts
+- **`test`** (Linux/Mac) / **`test.exe`** (Windows): Suite completa de testes
+- **`test_for`** (Linux/Mac) / **`test_for.exe`** (Windows): Testes específicos do for loop
+- **`teacher_tests`** (Linux/Mac) / **`teacher_tests.exe`** (Windows): Testes do professor
 
-Os scripts de compilação foram gerados com assistência de IA (GitHub Copilot) 
-para garantir compatibilidade entre diferentes ambientes de desenvolvimento.
+## Processo de Compilação
 
-## Por que Separar os Scripts de Compilação?
+O processo segue estas etapas:
 
-Manter os scripts de compilação em uma pasta separada ajuda a:
+1. **Configuração do ambiente OCaml** (via OPAM quando disponível)
+2. **Limpeza** de arquivos compilados anteriores
+3. **Compilação dos módulos**:
+   - `Datatypes.ml` → `Datatypes.cmo`
+   - `Eval.ml` → `Eval.cmo`
+   - `Test.ml` → `Test.cmo`
+   - `Test_For.ml` → `Test_For.cmo`
+   - `Teacher_tests.ml` → `Teacher_tests.cmo`
+4. **Criação dos executáveis**:
+   - Linking dos módulos compilados
+   - Geração dos executáveis finais
+5. **Execução automática dos testes** para validação
 
-1. Manter a raiz do projeto limpa e focada no código-fonte
-2. Facilitar a manutenção dos scripts sem interferir na implementação
-3. Separar claramente as responsabilidades (código vs. infraestrutura)
-4. Melhorar a organização geral do projeto
+## Requisitos
 
-## Retorno à Raiz do Projeto
+- **OCaml** (versão 4.x ou superior)
+- **OPAM** (recomendado para gerenciamento do ambiente)
 
-Todos os executáveis e artefatos de compilação são gerados na raiz do projeto,
-não nesta pasta.
+## Detecção Automática
 
-Estes scripts foram criados com auxílio do GitHub Copilot para fornecer
-uma experiência de compilação consistente em diferentes ambientes.
+Os scripts detectam automaticamente:
+- Versão do OCaml instalada
+- Disponibilidade do OPAM
+- Sistema operacional (Windows/Unix)
+- Tipo de terminal (CMD/PowerShell)
+
+## Notas
+
+- Todos os executáveis são gerados na **raiz do projeto**, não nesta pasta
+- Os scripts incluem validação automática via execução dos testes
+- Em caso de erro, a compilação para e exibe mensagens detalhadas
+- Os scripts foram otimizados para compatibilidade multiplataforma

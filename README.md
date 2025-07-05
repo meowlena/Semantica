@@ -1,61 +1,72 @@
-# Trabalho de Semântica Formal - Linguagem L2
+# Semântica Formal - Avaliador Small-Step para Linguagem L2
 
-## Interpretador para Linguagem Funcional com Referências e For Loop
+## Interpretador Small-Step com Referências, Substituição Textual e Validação de Tipos
 
-Este projeto implementa um interpretador completo para a linguagem funcional L2 com referências, incluindo a extensão com o construto `for` loop, conforme especificado na disciplina de Semântica Formal.
+Este projeto implementa um avaliador **small-step** completo para a linguagem funcional L2 com referências, seguindo rigorosamente a especificação formal da disciplina de Semântica Formal.
 
-### **Objetivos Alcançados**
-- Implementação completa da linguagem L2 (spec base)
-- Extensão com construto `for` loop
-- Semântica operacional big-step rigorosamente seguida
-- Sistema de referências e estado mutável
-- Tratamento robusto de erros
-- Bateria completa de testes (150+ casos)
-- Build multiplataforma (Windows/Linux/Mac)
-- Documentação detalhada com mapeamento formal
+### **Características Principais**
+- **Semântica Small-Step Pura**: Implementação fiel às regras (e, σ) → (e', σ')
+- **Substituição Textual**: Implementação da regra E-Let2 com [v/x]e
+- **Validação de Tipos**: Verificação de tipos em expressões condicionais
+- **Sistema de Referências**: Gerenciamento completo de memória mutável
+- **Testes Abrangentes**: Suite modular com 14 categorias de testes
+- **Build Multiplataforma**: Scripts otimizados para Windows/Linux/Mac
+- **Conformidade Formal**: Todos os testes do professor validados
+- **For Loop**: Funcionalidade extra implementada para nota total
 
 ### **Arquitetura do Projeto**
 
 ```
 Projeto Semantica/
-├── Datatypes.ml                    # AST e tipos sintáticos
-├── Eval.ml                         # Avaliador (semântica small-step)
-├── Test.ml                         # Suite de testes completa
+├── Datatypes.ml                    # AST e tipos da linguagem L2
+├── Eval.ml                         # Avaliador small-step (núcleo do projeto)
+├── Test.ml                         # Suite completa de testes (modular)
 ├── Test_For.ml                     # Testes específicos do for loop
-├── README.md                       # Este arquivo (documentação principal)
-├── SEMANTICA_SMALL_STEP.md         # Documentação da implementação
-├── Especs_Trab_Semantica_-_2025_1.pdf # Especificação formal do trabalho
-└── build/                          # Scripts de compilação
-    ├── Makefile                    # Build principal (Unix/Linux)
+├── Teacher_tests.ml                # Testes do professor (validação)
+├── README.md                       # Documentação principal (este arquivo)
+├── SEMANTICA_SMALL_STEP.md         # Documentação técnica detalhada
+├── Especs_Trab_Semantica_-_2025_1.pdf # Especificação formal
+└── build/                          # Sistema de build
+    ├── Makefile                    # Build Unix/Linux/Mac
     ├── build.ps1                   # Script PowerShell (Windows)
-    └── README.md                   # Instruções de build
+    └── README.md                   # Instruções de compilação
 ```
 
-## Compilação
+## Compilação e Execução
 
-### Método Rápido
+### Compilação Automática
 
-```bash
-# Usando PowerShell (Windows)
-.\build\build.ps1
-
-# Usando Makefile (Unix/Linux/Mac)
-cd build && make
+**Windows (PowerShell):**
+```powershell
+cd build
+.\build.ps1
 ```
 
-**Nota sobre Compilação no Windows**: O script detecta automaticamente se o compilador nativo (`ocamlopt`) está disponível e compila para código nativo quando possível, o que elimina a dependência do runtime `ocamlrun`. Caso contrário, usa bytecode (`ocamlc`).
-
-## Execução
-
-### Executar os Testes
-
+**Linux/Mac:**
 ```bash
-./testes  # Linux/Mac
-.\test.exe   # Windows (CMD/PowerShell)
+cd build
+make all
+```
 
-# Ou teste específico do for loop
-./test_for  # Linux/Mac
-.\test_for.exe   # Windows (CMD/PowerShell)
+### Executáveis Gerados
+
+Após a compilação, os seguintes executáveis estão disponíveis:
+
+- **`test`** (Linux/Mac) / **`test.exe`** (Windows): Suite completa de testes (200+ casos)
+- **`test_for`** (Linux/Mac) / **`test_for.exe`** (Windows): Testes específicos do for loop
+- **`teacher_tests`** (Linux/Mac) / **`teacher_tests.exe`** (Windows): Testes do professor (validação formal)
+
+**Execução:**
+```bash
+# Linux/Mac
+./test
+./test_for
+./teacher_tests
+
+# Windows (CMD/PowerShell)
+.\test.exe
+.\test_for.exe
+.\teacher_tests.exe
 ```
 
 ### Testes Interativos no REPL
@@ -109,6 +120,7 @@ O avaliador atualmente suporta **todas** as funcionalidades da linguagem especif
 - **Variáveis**: declaração (`Let`) e referência (`Id`) com escopo correto
 - **Sequenciamento**: execução sequencial de comandos (`Seq`)
 - **Laços**: `While` loops com condições booleanas
+- **For Loops**: Implementação adicional para nota total (funcionalidade extra)
 
 ### Gerenciamento de Memória
 - **Criação de referências**: `New` para alocar valores na memória
@@ -120,8 +132,9 @@ O avaliador atualmente suporta **todas** as funcionalidades da linguagem especif
 - **Leitura**: `Read` para ler valores inteiros da entrada padrão
 
 ### Executáveis Disponíveis
-- **`testes`**: Executa toda a bateria de testes automatizada
-- **`test_for`**: Executa testes específicos do for loop
+- **`test`** (Linux/Mac) / **`test.exe`** (Windows): Executa toda a bateria de testes automatizada
+- **`test_for`** (Linux/Mac) / **`test_for.exe`** (Windows): Executa testes específicos do for loop (funcionalidade extra)
+- **`teacher_tests`** (Linux/Mac) / **`teacher_tests.exe`** (Windows): Testes do professor para validação formal
 
 ### Tratamento de Erros
 O avaliador detecta e reporta corretamente:
@@ -131,6 +144,22 @@ O avaliador detecta e reporta corretamente:
 - Desreferenciamento de valores não-referência
 - Atribuição a valores não-referência
 - Condições não-booleanas em `If` e `While`
+
+
+## Funcionalidade Extra Para Nota Total
+
+Este projeto implementa **For Loops** como funcionalidade adicional para obtenção da nota total. O For Loop:
+
+- **Sintaxe**: `For(variavel, inicio, fim, corpo)`
+- **Semântica**: Executa o corpo com a variável iterando do valor inicial ao final
+- **Implementação**: Desugaring para While com referências e Let
+- **Testes**: Suite completa incluindo casos extremos (ranges vazios, unitários)
+- **Validação**: Testes específicos em `Test_For.ml` e integrados em `Test.ml`
+
+Exemplo de uso:
+```ocaml
+For("i", Num 1, Num 5, Print(Id "i"))  (* Imprime 1, 2, 3, 4, 5 *)
+```
 
 ## Nota sobre uso de IA
 
