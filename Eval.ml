@@ -58,6 +58,54 @@ let valor_to_expr = function
   | VUnit -> Unit
   | VRef addr -> Ref addr
 
+(* Substituição textual: [v/x]e
+   Implementa a operação [v/x]e da regra E-Let2 
+   Substitui todas as ocorrências livres da variável x por valor v na expressão e *)
+let rec substituir_variavel x v expr =
+  match expr with
+  | Num n -> Num n
+  | Bool b -> Bool b  
+  | Unit -> Unit
+  | Ref addr -> Ref addr
+  | Id y -> 
+      if y = x then valor_to_expr v else Id y
+  | Binop(op, e1, e2) -> 
+      Binop(op, substituir_variavel x v e1, substituir_variavel x v e2)
+  | If(cond, then_expr, else_expr) ->
+      If(substituir_variavel x v cond,
+         substituir_variavel x v then_expr,
+         substituir_variavel x v else_expr)
+  | Let(y, tipo, expr_valor, expr_corpo) ->
+      let expr_valor' = substituir_variavel x v expr_valor in
+      if y = x then
+        (* Variável x é mascarada pelo let: não substitui no corpo *)
+        Let(y, tipo, expr_valor', expr_corpo)
+      else
+        (* x não é mascarada: substitui também no corpo *)
+        Let(y, tipo, expr_valor', substituir_variavel x v expr_corpo)
+  | Seq(e1, e2) ->
+      Seq(substituir_variavel x v e1, substituir_variavel x v e2)
+  | New(expr) ->
+      New(substituir_variavel x v expr)
+  | Deref(expr) ->
+      Deref(substituir_variavel x v expr)
+  | Asg(expr_ref, expr_valor) ->
+      Asg(substituir_variavel x v expr_ref, substituir_variavel x v expr_valor)
+  | Print(expr) ->
+      Print(substituir_variavel x v expr)
+  | Read -> Read
+  | Wh(cond_expr, body_expr) ->
+      Wh(substituir_variavel x v cond_expr, substituir_variavel x v body_expr)
+  | For(y, start_expr, end_expr, body_expr) ->
+      let start_expr' = substituir_variavel x v start_expr in
+      let end_expr' = substituir_variavel x v end_expr in
+      if y = x then
+        (* Variável x é mascarada pelo for: não substitui no corpo *)
+        For(y, start_expr', end_expr', body_expr)
+      else
+        (* x não é mascarada: substitui também no corpo *)
+        For(y, start_expr', end_expr', substituir_variavel x v body_expr)
+
 (* Busca variável no ambiente *)
 let rec buscar_variavel nome env =
   match env with
@@ -201,22 +249,33 @@ let rec step expr estado =
       else
         (* Condição é valor: escolhe o ramo *)
         (match cond with
-        | Bool true -> (then_expr, estado)
-        | Bool false -> (else_expr, estado)
+        | Bool true -> 
+            (* Verifica tipos dos ramos antes de escolher *)
+            (match (then_expr, else_expr) with
+            | (Bool _, Unit) | (Unit, Bool _) | (Num _, Bool _) | (Bool _, Num _) 
+            | (Num _, Unit) | (Unit, Num _) ->
+                raise (TiposIncompativeis "Ramos do IF devem ter o mesmo tipo")
+            | _ -> (then_expr, estado))
+        | Bool false -> 
+            (* Verifica tipos dos ramos antes de escolher *)
+            (match (then_expr, else_expr) with
+            | (Bool _, Unit) | (Unit, Bool _) | (Num _, Bool _) | (Bool _, Num _) 
+            | (Num _, Unit) | (Unit, Num _) ->
+                raise (TiposIncompativeis "Ramos do IF devem ter o mesmo tipo")
+            | _ -> (else_expr, estado))
         | _ -> raise (TiposIncompativeis "Condição do IF deve ser booleana"))
   
-  (* LET *)
+  (* LET - Implementa a regra E-Let2 com substituição textual *)
   | Let(nome, tipo, expr_valor, expr_corpo) ->
       if not (is_value expr_valor) then
-        (* Reduz a expressão de valor *)
+        (* E-Let1: Reduz a expressão de valor primeiro *)
         let (expr_valor', estado') = step expr_valor estado in
         (Let(nome, tipo, expr_valor', expr_corpo), estado')
       else
-        (* Valor pronto: faz a substituição *)
+        (* E-Let2: Valor pronto, aplica substituição textual [v/x]e *)
         let valor = expr_to_valor expr_valor in
-        let novo_env = (nome, valor) :: estado.env in
-        let estado_com_var = { estado with env = novo_env } in
-        (expr_corpo, estado_com_var)
+        let expr_substituida = substituir_variavel nome valor expr_corpo in
+        (expr_substituida, estado)
   
   (* SEQUENCIAMENTO *)
   | Seq(e1, e2) ->
