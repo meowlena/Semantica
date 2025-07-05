@@ -7,7 +7,7 @@ ROOT_DIR = ..
 OCAMLC = ocamlc
 
 # Arquivos fonte (com caminho relativo)
-SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Main.ml $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Test_For.ml
+SOURCES = $(ROOT_DIR)/Datatypes.ml $(ROOT_DIR)/Eval.ml $(ROOT_DIR)/Main.ml $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Test_For.ml $(ROOT_DIR)/Teacher_tests.ml
 OBJECTS = $(notdir $(SOURCES:.ml=.cmo))
 
 # Diretório de trabalho
@@ -16,7 +16,7 @@ set-workdir:
 	cd $(ROOT_DIR)
 
 # Alvos principais
-all: set-workdir avaliador testes test_for
+all: set-workdir avaliador testes test_for teacher_tests
 
 # Compilar o avaliador (com Main.ml)
 avaliador: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Main.cmo
@@ -29,6 +29,10 @@ testes: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Test.cmo
 # Compilar e linkar teste do for loop
 test_for: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Test_For.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -o test_for Datatypes.cmo Eval.cmo Test_For.cmo
+
+# Compilar e linkar testes do professor
+teacher_tests: $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo $(ROOT_DIR)/Teacher_tests.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -o teacher_tests Datatypes.cmo Eval.cmo Teacher_tests.cmo
 
 # Compilar módulos individuais
 $(ROOT_DIR)/Datatypes.cmo: $(ROOT_DIR)/Datatypes.ml
@@ -46,12 +50,15 @@ $(ROOT_DIR)/Test.cmo: $(ROOT_DIR)/Test.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/
 $(ROOT_DIR)/Test_For.cmo: $(ROOT_DIR)/Test_For.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
 	cd $(ROOT_DIR) && $(OCAMLC) -c Test_For.ml
 
+$(ROOT_DIR)/Teacher_tests.cmo: $(ROOT_DIR)/Teacher_tests.ml $(ROOT_DIR)/Datatypes.cmo $(ROOT_DIR)/Eval.cmo
+	cd $(ROOT_DIR) && $(OCAMLC) -c Teacher_tests.ml
+
 # Limpar arquivos compilados
 clean:
-	cd $(ROOT_DIR) && rm -f *.cmi *.cmo avaliador avaliador.tmp testes testes.tmp test_for test_for.tmp
+	cd $(ROOT_DIR) && rm -f *.cmi *.cmo avaliador avaliador.tmp testes testes.tmp test_for test_for.tmp teacher_tests teacher_tests.tmp
 
 # Regras para Windows (PowerShell)
 win-clean:
-	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe, test_for, test_for.exe, test_for.tmp, test_for.tmp.exe -ErrorAction SilentlyContinue"
+	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe, test_for, test_for.exe, test_for.tmp, test_for.tmp.exe, teacher_tests, teacher_tests.exe, teacher_tests.tmp, teacher_tests.tmp.exe -ErrorAction SilentlyContinue"
 
-.PHONY: all clean win-clean avaliador testes test_for
+.PHONY: all clean win-clean avaliador testes test_for teacher_tests

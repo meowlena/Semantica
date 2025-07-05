@@ -71,10 +71,17 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[4/4] Compilando Test_For.ml..." -ForegroundColor White
+Write-Host "`n[4/5] Compilando Test_For.ml..." -ForegroundColor White
 ocamlc -c Test_For.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao compilar Test_For.ml" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
+Write-Host "`n[5/5] Compilando Teacher_tests.ml..." -ForegroundColor White
+ocamlc -c Teacher_tests.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao compilar Teacher_tests.ml" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
@@ -88,10 +95,17 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "`n[2/2] Criando executavel do teste de FOR..." -ForegroundColor White
+Write-Host "`n[2/3] Criando executavel do teste de FOR..." -ForegroundColor White
 ocamlc -o test_for.exe Datatypes.cmo Eval.cmo Test_For.ml
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERRO ao criar test_for.exe" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
+Write-Host "`n[3/3] Criando executavel dos testes do professor..." -ForegroundColor White
+ocamlc -o teacher_tests.exe Datatypes.cmo Eval.cmo Teacher_tests.ml
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERRO ao criar teacher_tests.exe" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
@@ -104,11 +118,13 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "   BUILD COMPLETO E TESTES PASSARAM!   " -ForegroundColor Green
     Write-Host "=======================================" -ForegroundColor Green
     Write-Host "`nExecutaveis criados:" -ForegroundColor Cyan
-    Write-Host "  testes.exe     - Bateria completa de testes" -ForegroundColor Yellow
-    Write-Host "  test_for.exe   - Teste interativo do for loop" -ForegroundColor Yellow
+    Write-Host "  testes.exe         - Bateria completa de testes" -ForegroundColor Yellow
+    Write-Host "  test_for.exe       - Teste interativo do for loop" -ForegroundColor Yellow
+    Write-Host "  teacher_tests.exe  - Testes do professor" -ForegroundColor Yellow
     Write-Host "`nPara testar:"
-    Write-Host "  .\testes.exe      - Executar todos os testes" -ForegroundColor Cyan
-    Write-Host "  .\test_for.exe    - Testar for loop interativo" -ForegroundColor Cyan
+    Write-Host "  .\testes.exe         - Executar todos os testes" -ForegroundColor Cyan
+    Write-Host "  .\test_for.exe       - Testar for loop interativo" -ForegroundColor Cyan
+    Write-Host "  .\teacher_tests.exe  - Executar testes do professor" -ForegroundColor Cyan
     Write-Host "`nImplementacao small-step da linguagem L2 pronta!" -ForegroundColor Green
 } else {
     Write-Host "`n=======================================" -ForegroundColor Red
