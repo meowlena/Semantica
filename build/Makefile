@@ -59,6 +59,6 @@ clean:
 
 # Regras para Windows (PowerShell)
 win-clean:
-	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, testes.exe, testes.tmp, testes.tmp.exe, test_for, test_for.exe, test_for.tmp, test_for.tmp.exe, teacher_tests, teacher_tests.exe, teacher_tests.tmp, teacher_tests.tmp.exe -ErrorAction SilentlyContinue"
+	cd $(ROOT_DIR) && powershell "Remove-Item -Force *.cmi, *.cmo, avaliador, avaliador.exe, avaliador.tmp, avaliador.tmp.exe, testes, test.exe, testes.tmp, testes.tmp.exe, test_for, test_for.exe, test_for.tmp, test_for.tmp.exe, teacher_tests, teacher_tests.exe, teacher_tests.tmp, teacher_tests.tmp.exe -ErrorAction SilentlyContinue"
 
 .PHONY: all clean win-clean avaliador testes test_for teacher_tests

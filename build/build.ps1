@@ -89,9 +89,9 @@ Write-Host "`n=== CRIANDO EXECUTAVEIS ===" -ForegroundColor Yellow
 
 # Compilar os executáveis de teste
 Write-Host "`n[1/2] Criando executavel de testes..." -ForegroundColor White
-ocamlc -o testes.exe Datatypes.cmo Eval.cmo Test.cmo
+ocamlc -o test.exe Datatypes.cmo Eval.cmo Test.cmo
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERRO ao criar testes.exe" -ForegroundColor Red
+    Write-Host "ERRO ao criar test.exe" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
@@ -111,18 +111,18 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "`n=== EXECUTANDO TESTES AUTOMATICOS ===" -ForegroundColor Yellow
 Write-Host "`nExecutando testes para validar a compilacao..."
-.\testes.exe
+.\test.exe
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n=======================================" -ForegroundColor Green
     Write-Host "   BUILD COMPLETO E TESTES PASSARAM!   " -ForegroundColor Green
     Write-Host "=======================================" -ForegroundColor Green
     Write-Host "`nExecutaveis criados:" -ForegroundColor Cyan
-    Write-Host "  testes.exe         - Bateria completa de testes" -ForegroundColor Yellow
+    Write-Host "  test.exe         - Bateria completa de testes" -ForegroundColor Yellow
     Write-Host "  test_for.exe       - Teste interativo do for loop" -ForegroundColor Yellow
     Write-Host "  teacher_tests.exe  - Testes do professor" -ForegroundColor Yellow
     Write-Host "`nPara testar:"
-    Write-Host "  .\testes.exe         - Executar todos os testes" -ForegroundColor Cyan
+    Write-Host "  .\test.exe         - Executar todos os testes" -ForegroundColor Cyan
     Write-Host "  .\test_for.exe       - Testar for loop interativo" -ForegroundColor Cyan
     Write-Host "  .\teacher_tests.exe  - Executar testes do professor" -ForegroundColor Cyan
     Write-Host "`nImplementacao small-step da linguagem L2 pronta!" -ForegroundColor Green
